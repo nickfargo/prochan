@@ -2,32 +2,31 @@
 
 I/O-enabled communicating sequential `proc`esses via `chan`nels.
 
+Influenced by [**Go**][0] and by [Clojure’s **core.async**][1]. Outwardly comparable to the excellent [**js-csp**][2], a faithful port of **core.async**.
 
-#### Influences
-
-Draws from [**Go**][0], and heavily from [cljs/**core.async**][1]. Comparable to the excellent [**js-csp**][2], a considerably less-faithless port of **core.async**.
-
-Explores the space of treating **processes** as first-class I/O primitives, and as such, effectively as **logical channels**, with all the composability that implies.
-
-
-#### Features
-
-- Superset of the core CSP operations described by **Go** and **core.async**
-- Support for compositional transforms via Clojure-style **transducers**
-- **Performance**, particularly at scale
-- Clear, minimal, approachable **annotated source**
-
-
-#### Aims
-
-- Rich **process** constructs, system snapshots, diagnostics, etc.
-- Feature parity to the whole of **core.async**, where appropriate for JS
-- Translatability to **alternative async models**, e.g. Node, Promises, Rx, etc.
+Explores the treatment of **processes** as first-class I/O primitives, and thus as logical channels themselves, with all the composability that implies.
 
 
 #### Design
 
-Targets platforms supporting ES6 generator functions, but also compatible down to ES3 using manual iterators. Sourced (for now) in [**Literate Coffee**][3].
+- Targets platforms supporting ES6 generator functions
+- Also compatible down to ES3 using manual iterators
+- Sourced (for now) in [**Literate Coffee**][3].
+
+
+#### Features
+
+- Core CSP operations as described by **Go** and **core.async**
+- Clear, approachable **annotated source code**
+- **Performance**, particularly at scale
+- Support for functional transforms via Clojure-style **transducers**
+
+
+#### Goals
+
+- Rich **process** constructs, system snapshots, diagnostics, etc.
+- Feature parity to the whole of **core.async**, where appropriate for JS
+- Translatability to **alternative async models**, e.g. Node, Promises, Rx, etc.
 
 
 
@@ -42,7 +41,7 @@ Targets platforms supporting ES6 generator functions, but also compatible down t
 
 #### `select`/`alts`
 
-The `select` expression (also aliased to `alts`) uses delegated (`yield*`) generator functions, allowing for an expressive alternate syntax:
+In **prochan** the `select` expression (also aliased to `alts`) uses delegated generator functions (`yield*`), allowing for a variety of syntactical forms:
 
 ###### ES6
 
@@ -53,7 +52,7 @@ import {proc, chan, send, receive, select, sleep} from 'prochan';
 describe("select/alts expression", function () {
   it("supports simple inline form", proc.async( function* () {
     const ch1 = chan(), ch2 = chan(), ch3 = chan();
-    proc( function * () {
+    proc( function* () {
       yield sleep(1);
       yield send( ch3, 42 );
     });
@@ -71,7 +70,7 @@ describe("select/alts expression", function () {
       yield send( ch3, 42 );
     });
     assert.equal('foo', yield receive( proc( function* () {
-      yield* select
+      return yield* select
         .send( [ch1, 1337], function* (value, channel) {
           assert( false, "unreachable" );
         })
@@ -79,8 +78,7 @@ describe("select/alts expression", function () {
           assert.equal( value, 42 );
           assert.equal( channel, ch3 );
           return 'foo';
-        })
-        // ...
+        });
     })));
   }));
 });
@@ -112,14 +110,16 @@ describe "select/alts expression", ->
           assert.equal value, 42
           assert.equal channel, ch3
           yield return 'foo'
-        # ...
 ```
 
 
 
 ---
 
-> ... TODO: api overview, ...
+> TODO:
+  - api overview
+  - additional distinguishing examples
+  - ...
 
 ---
 
