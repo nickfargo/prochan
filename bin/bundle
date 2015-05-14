@@ -1,0 +1,13 @@
+#!/bin/bash
+
+coffee -o lib/ -c src/
+coffee -o test/lib/ -c test/src/
+
+mocha --colors --recursive -R progress || exit
+
+mkdir -p bundles
+browserify -e ./ -s prochan > bundles/prochan.js
+uglifyjs bundles/prochan.js -m > bundles/prochan.min.js
+
+echo $(cat bundles/prochan.js | wc -c | sed 's/^[ ]*//') bytes, \
+     $(gzip -c bundles/prochan.min.js | wc -c | sed 's/^[ ]*//') gzipped

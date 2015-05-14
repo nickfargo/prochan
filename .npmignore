@@ -1,0 +1,6 @@
+bench/
+bin/
+bundles/
+src/
+test/
+*.coffee.md

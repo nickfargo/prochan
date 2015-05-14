@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ -e lib ]; then rm lib/*; else mkdir lib; fi
+if [ -e test/lib ]; then rm test/lib/*; else mkdir test/lib; fi
+
+coffee -o lib/ -c src/
+coffee -o test/lib/ -c test/src/

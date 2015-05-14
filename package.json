@@ -1,0 +1,38 @@
+{
+  "name": "prochan",
+  "version": "0.1.0",
+  "description": "CSP",
+  "keywords": [
+    "csp",
+    "processes",
+    "channels",
+    "generators"
+  ],
+  "author": "Nick Fargo",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/nickfargo/prochan.git"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://raw.github.com/nickfargo/prochan/master/LICENSE"
+    }
+  ],
+  "main": "lib/index",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "bin/test",
+    "build": "bin/bundle",
+    "prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "coffee-script": "~1.9.0",
+    "mocha": "*",
+    "chai": ">=1.5.0",
+    "benchmark": "^1.0.0",
+    "transducers-js": "*"
+  }
+}
