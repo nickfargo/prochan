@@ -2,4 +2,4 @@
 
 bin/compile
 
-mocha --harmony --colors --recursive -R spec
+mocha --harmony --colors --recursive -R spec "$@"
