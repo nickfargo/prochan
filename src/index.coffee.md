@@ -208,6 +208,12 @@ Returns a channel that will immediately close with the first value sent to it.
 
 
 
+### [mult]()
+
+    mult = (channel) -> new Multicast channel
+
+
+
 
 ### Aliases and exports
 
@@ -225,4 +231,12 @@ Returns a channel that will immediately close with the first value sent to it.
         proc, chan, go
         receive, send, select, poll, offer
         timeout, sleep
+        mult
       }
+
+
+
+
+### Forward imports
+
+    Multicast = require './multicast'
