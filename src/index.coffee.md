@@ -111,7 +111,7 @@ Returns a channel that will immediately close with the first value sent to it.
       ch = chan null, transducer
       receive.async ch, callback = (channel, value) ->
         if ch.buffer?
-          ch.buffer.close
+          do ch.buffer.close
           ch.buffer = null
         ch.flags |= 8 # hacking the EMPTY flag in order to `close` properly
         ch.close value
