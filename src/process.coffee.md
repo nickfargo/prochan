@@ -206,8 +206,8 @@ Public accessors to the attenuated I/O ports.
 
 I/O channel state predicates.
 
-      canProcessReceive: -> !!@cin?.canProcessReceive()  # TODO: should return
-      canProcessSend:    -> !!@cout?.canProcessSend()    # true if no I/O yet
+      canProcessReceive: -> !@cin? or !!@cin.canProcessReceive()
+      canProcessSend:    -> !@cout? or !!@cout.canProcessSend()
       isClosed:          -> !!@cin?.isClosed()
       isDone:            -> !!@cout?.isDone()
 
