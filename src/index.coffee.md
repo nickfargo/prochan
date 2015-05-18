@@ -132,15 +132,13 @@ Returns a channel that will immediately close with the first value sent to it.
 
 #### [receive.async]()
 
-> Seems like the “immediate” case should not synchronously invoke the callback.
-
     receive.async = (channel, fn) ->
-      callback  = Callback.alloc channel, fn
+      callback  = Callback.alloc fn
+      done      = channel.isDone()
       immediate = channel.canProcessReceive()
       result    = channel.dequeue callback
-      if immediate then callback.proceed result, channel.isDone()
-      result
-
+      if done or immediate then callback.proceed result, done
+      return
 
 
 ### [send]()
@@ -157,11 +155,12 @@ Returns a channel that will immediately close with the first value sent to it.
 #### [send.async]()
 
     send.async = (channel, value, fn) ->
-      callback  = Callback.alloc channel, fn
+      callback  = Callback.alloc fn
+      closed    = channel.isClosed()
       immediate = channel.canProcessSend()
       result    = channel.enqueue callback, value
-      if immediate then callback.proceed result, channel.isClosed()
-      result
+      if closed or immediate then callback.proceed result, closed
+      not closed
 
 
 
