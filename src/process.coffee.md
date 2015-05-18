@@ -242,7 +242,8 @@ communication to the process’s I/O ports.
 Causes `ioc` to break its loop of stepping through the process `iterator`. The
 process will resume after the blocking channel calls `proceed`.
 
-      block: (@awaitee, @value) ->
+      block: ->
+        super
         do @throw unless @flags & RUNNING
         @flags = BLOCKED
         this

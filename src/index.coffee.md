@@ -109,7 +109,7 @@ Returns a channel that will immediately close with the first value sent to it.
 
     chan.single = (transducer) ->
       ch = chan null, transducer
-      receive.async ch, callback = (channel, value) ->
+      receive.async ch, callback = (value) ->
         if ch.buffer?
           do ch.buffer.close
           ch.buffer = null

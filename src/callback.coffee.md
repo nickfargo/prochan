@@ -17,13 +17,12 @@ Used by (`send.async`|`receive.async`).
 
     pooled class Callback extends Awaiter
 
-      constructor: (channel, fn, context) ->
+      constructor: (fn) ->
         super
-        @channel = channel
-        @fn      = fn
-        @context = context
+        @fn = fn
 
       proceed: (value, isFinal) ->
-        result = @fn?.call @context, @channel, value, isFinal
+        prior = @value
+        @fn?.call null, value, @awaitee, isFinal
         do @free
-        result
+        prior

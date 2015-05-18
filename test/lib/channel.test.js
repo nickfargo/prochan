@@ -151,23 +151,33 @@
         return (yield receive(p1));
       }));
     });
-    describe("Async ops:", function() {
-      it("sends asynchronously to PULLED channel", async(function*() {
+    describe("Async:", function() {
+      it("sends to a pulled channel (9 13)", async(function*() {
         var asyncValue, ch, p1;
         ch = chan();
+        asyncValue = null;
         p1 = proc(function*() {
           return (yield receive(ch));
         });
         (yield sleep(1));
-        asyncValue = null;
-        send.async(ch, 42, function(channel, value) {
+        send.async(ch, 42, function(value) {
           return asyncValue = value;
         });
         assert.equal(42, (yield receive(p1)));
         (yield sleep(1));
         return assert.equal(true, asyncValue);
       }));
-      it("receives asynchronously to PUSHED channel", async(function*() {
+      it("sends to a detaining channel (4 6 12 14)", async(function*() {
+        var asyncValue, ch;
+        ch = chan();
+        asyncValue = null;
+        send.async(ch, 42, function(value) {
+          return asyncValue = value;
+        });
+        assert.equal(42, (yield receive(ch)));
+        return assert.equal(true, asyncValue);
+      }));
+      it("receives from a pushed channel (6 14)", async(function*() {
         var asyncValue, ch, p1;
         ch = chan();
         p1 = proc(function*() {
@@ -175,7 +185,7 @@
         });
         (yield sleep(1));
         asyncValue = null;
-        receive.async(ch, function(channel, value) {
+        receive.async(ch, function(value) {
           return asyncValue = value;
         });
         assert.equal(true, (yield receive(p1)));

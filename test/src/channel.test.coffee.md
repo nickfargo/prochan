@@ -111,23 +111,31 @@ A `send` to a channel that either is already closed or will close before the sen
           yield receive p1
 
 
-      describe "Async ops:", ->
-        it "sends asynchronously to PULLED channel", async ->
+      describe "Async:", ->
+
+        it "sends to a pulled channel (9 13)", async ->
           ch = chan()
+          asyncValue = null
           p1 = proc -> yield receive ch
           yield sleep 1
-          asyncValue = null
-          send.async ch, 42, (channel, value) -> asyncValue = value
+          send.async ch, 42, (value) -> asyncValue = value
           assert.equal 42, yield receive p1
           yield sleep 1
           assert.equal yes, asyncValue
 
-        it "receives asynchronously to PUSHED channel", async ->
+        it "sends to a detaining channel (4 6 12 14)", async ->
+          ch = chan()
+          asyncValue = null
+          send.async ch, 42, (value) -> asyncValue = value
+          assert.equal 42, yield receive ch
+          assert.equal yes, asyncValue
+
+        it "receives from a pushed channel (6 14)", async ->
           ch = chan()
           p1 = proc -> yield send ch, 42
           yield sleep 1
           asyncValue = null
-          receive.async ch, (channel, value) -> asyncValue = value
+          receive.async ch, (value) -> asyncValue = value
           assert.equal yes, yield receive p1
           yield sleep 1
           assert.equal 42, asyncValue
