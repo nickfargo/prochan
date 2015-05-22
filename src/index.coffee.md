@@ -1,6 +1,6 @@
-## prochan/src/index
+## index
 
-This module is the entry point, and defines all of **prochan**’s exported
+This is the entry-point module that defines all of **prochan**’s exported
 functions.
 
     Process   = require './process'
@@ -18,18 +18,17 @@ functions.
 
 ### [proc]()
 
-> (`generator`: Function | Iterator, `[args]`? : Array) → **[`Process`][]**
+> (`generator`: {Function | Iterator}, `args?`: Array) → **[`Process`][]**
 
 Spawns a new `Process` whose `parent` is the **current process**, and schedules
 it into the global **run queue**.
 
-    proc = ->
-      p = Process.spawn.apply Process, arguments
+    proc = (generator, args) -> Process.spawn arguments...
 
 
 #### [proc.async]()
 
-> (`generatorFn`) → (`...args`) → void
+> (`generator`: Function) → (`...args`) → void
 
 Translates a `proc`-able `generator` function into a Node-style async function.
 
@@ -65,9 +64,9 @@ that respond to callbacks differently based on their parameter count.
 
 #### I/O delegates
 
-Functions that delegate to the current process. These allow the current process
-to be referenced from within its generator function, using a channel-like
-interface.
+Functions mounted onto `proc` that delegate to the I/O channels of the current
+process. This allows the `proc` binding itself to act as a proxied reference to
+the current process from within the process’s own generator function.
 
     do ->
       f = (name) -> -> Process.current()[name] arguments...
@@ -103,7 +102,7 @@ spawned process.
 
 ### [chan]()
 
-> (`buffer`? : Number, `transducer`? : Function) → **[`Channel`][]**
+> (`buffer?`: Number, `transducer?`: Function) → **[`Channel`][]**
 
 Creates a `Channel` with optional buffering and input transformation.
 
@@ -113,7 +112,7 @@ Creates a `Channel` with optional buffering and input transformation.
 
 #### [chan.fixed](), [chan.sliding](), [chan.dropping]()
 
-> (`buffer`? : Number, `transducer`? : Function) → **[`Channel`][]**
+> (`buffer?`: Number, `transducer?`: Function) → **[`Channel`][]**
 
 Creates a `Channel` with one of the built-in **[`Buffer`][]** types.
 
@@ -146,6 +145,8 @@ the closing value.
 
 ### [receive]()
 
+> (`channel?`: {Channel | Process}) → any
+
 Starts a **receive** channel operation on the **current process**.
 
 The current process must suspend (e.g. with `yield`) immediately upon calling,
@@ -153,8 +154,6 @@ and will **await** the `channel` if no `value` is immediately available. The
 received `value` is conveyed upon continuation.
 
 > `value = yield receive( channel )`
-
-> `value = yield receive()`
 
 If `channel` is another `Process`, the operation will receive from the **out**
 I/O channel of that process. If no `channel` is specified, the operation will
@@ -188,6 +187,8 @@ receive from the **in** I/O channel of the current process.
 
 ### [send]()
 
+> (`channel?`: {Channel | Process}, `value`: any) → boolean
+
 Starts a **send** channel operation on the **current process**.
 
 The current process must suspend (e.g. with `yield`) immediately upon calling,
@@ -195,8 +196,6 @@ and will **await** the `channel` if no receiver or buffer space is immediately
 available for the `value` to be sent.
 
 > `yield send( channel, value )`
-
-> `yield send( value )`
 
 If `channel` is another `Process`, the operation will send to the **in** I/O
 channel of that process. If no `channel` is specified, the operation will send
