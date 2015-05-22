@@ -4,7 +4,7 @@
     Selector  = require './selector'
     Callback  = require './callback'
 
-    {alias} = require './helpers'
+    {alias, AbstractGenerator} = require './helpers'
 
     {slice} = Array::
 
@@ -34,20 +34,18 @@ The returned function takes the arguments provided to `generator` and appends a
 
     proc.async = do ->
 
-      class AsyncIterator
-        constructor: (@generator, @args, @callback) ->
-          @step = 0
-          @result = value: undefined, done: no
-        next: (input) ->
-          switch ++@step
-            when 1
-              output = receive proc @generator, @args
-            when 2
-              try output = @callback null, input
-              catch error then @callback error
-              @result.done = yes
-          @result.value = output
-          @result
+      class AsyncGenerator extends AbstractGenerator
+
+        constructor: (g,a,c) ->
+          super; @generator = g; @args = a; @callback = c
+
+        next: (input) -> switch ++@_step
+          when 1
+            @yield receive proc @generator, @args
+          when 2
+            try output = @callback null, input
+            catch error then @callback error
+            @return output
 
 The returned function includes a blank parameter (`_`) to satisfy consumers
 that respond to callbacks differently based on their parameter count.
@@ -56,7 +54,7 @@ that respond to callbacks differently based on their parameter count.
   parameter (nominally “`done`”), but otherwise runs the test synchronously.
 
       async = (generator) -> (_) ->
-        g = (args..., callback) -> new AsyncIterator generator, args, callback
+        g = (args..., callback) -> new AsyncGenerator generator, args, callback
         proc g, arguments
         return
 
