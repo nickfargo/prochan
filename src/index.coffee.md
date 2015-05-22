@@ -1,3 +1,8 @@
+## prochan/src/index
+
+This module is the entry point, and defines all of **prochan**’s exported
+functions.
+
     Process   = require './process'
     Channel   = require './channel'
     Buffer    = require './buffer'
@@ -13,24 +18,23 @@
 
 ### [proc]()
 
-> `(generatorFn, [args]): Process`
+> (`generator`: Function | Iterator, `[args]`? : Array) → **[`Process`][]**
 
-Spawns a new process whose `parent` is the **current process**. The new process
-is immediately **scheduled** into the **run queue**.
+Spawns a new `Process` whose `parent` is the **current process**, and schedules
+it into the global **run queue**.
 
     proc = ->
       p = Process.spawn.apply Process, arguments
-      # TODO: attenuate (?), maybe all the way down to just an `id:number`
 
 
 #### [proc.async]()
 
-> `(generatorFn) → (...args): void`
+> (`generatorFn`) → (`...args`) → void
 
 Translates a `proc`-able `generator` function into a Node-style async function.
 
 The returned function takes the arguments provided to `generator` and appends a
-`callback` with the conventional signature `(error, ...args): void`.
+`callback` with the conventional `(error, ...args)` signature.
 
     proc.async = do ->
 
@@ -73,14 +77,23 @@ interface.
         proc[name] = f name
       return
 
+
+#### proc.dump
+
+Reports process state of all live processes. Calling `proc.dump('tree')` lists
+processes hierarchically.
+
     proc.dump = Process.dump
 
 
 
 ### [go]()
 
-Spawns a process and returns a channel to which the spawned process will send
-its return value.
+> (`generator`: Function | Iterator, `[args]`? : Array) → **[`Outlet`][]**
+
+Like `proc`, spawns a `Process`, but returns its I/O **channel outlet**. The
+final value `receive`d from the channel outlet will be the return value of the
+spawned process.
 
     go = ->
       p = Process.spawn arguments...
@@ -90,11 +103,19 @@ its return value.
 
 ### [chan]()
 
+> (`buffer`? : Number, `transducer`? : Function) → **[`Channel`][]**
+
+Creates a `Channel` with optional buffering and input transformation.
+
     chan = (buffer, transducer) ->
       ch = new Channel buffer, transducer
 
 
 #### [chan.fixed](), [chan.sliding](), [chan.dropping]()
+
+> (`buffer`? : Number, `transducer`? : Function) → **[`Channel`][]**
+
+Creates a `Channel` with one of the built-in **[`Buffer`][]** types.
 
     for name in ['fixed', 'sliding', 'dropping']
       fn = Buffer[name]
@@ -103,7 +124,13 @@ its return value.
 
 #### [chan.single]()
 
-Returns a channel that will immediately close with the first value sent to it.
+Returns a `Channel` that will immediately `close` with the first value sent.
+
+Acts as a *promise*, in that any processes that `receive` from the channel will
+block if a value has not yet been sent, and thereafter will immediately receive
+the closing value.
+
+> Alias: `chan.promise`
 
     chan.single = (transducer) ->
       ch = chan null, transducer
@@ -111,13 +138,29 @@ Returns a channel that will immediately close with the first value sent to it.
         if ch.buffer?
           do ch.buffer.close
           ch.buffer = null
-        ch.flags |= 8 # hacking the EMPTY flag in order to `close` properly
+        ch.flags |= 8 # EMPTY
         ch.close value
       ch
 
 
 
 ### [receive]()
+
+Starts a **receive** channel operation on the **current process**.
+
+The current process must suspend (e.g. with `yield`) immediately upon calling,
+and will **await** the `channel` if no `value` is immediately available. The
+received `value` is conveyed upon continuation.
+
+> `value = yield receive( channel )`
+
+> `value = yield receive()`
+
+If `channel` is another `Process`, the operation will receive from the **out**
+I/O channel of that process. If no `channel` is specified, the operation will
+receive from the **in** I/O channel of the current process.
+
+> Aliases: `take`, `get`
 
     receive = ->
       p = Process.current()
@@ -130,6 +173,10 @@ Returns a channel that will immediately close with the first value sent to it.
 
 #### [receive.async]()
 
+**[`Callback`][]** version of `receive`. Does not require a suspendible caller.
+
+> `fn`: (`value`, `channel`, `done`) → void
+
     receive.async = (channel, fn) ->
       callback  = Callback.alloc fn
       done      = channel.isDone()
@@ -141,6 +188,22 @@ Returns a channel that will immediately close with the first value sent to it.
 
 ### [send]()
 
+Starts a **send** channel operation on the **current process**.
+
+The current process must suspend (e.g. with `yield`) immediately upon calling,
+and will **await** the `channel` if no receiver or buffer space is immediately
+available for the `value` to be sent.
+
+> `yield send( channel, value )`
+
+> `yield send( value )`
+
+If `channel` is another `Process`, the operation will send to the **in** I/O
+channel of that process. If no `channel` is specified, the operation will send
+to the **out** I/O channel of the current process.
+
+> Alias: `put`
+
     send = ->
       p = Process.current()
       switch arguments.length
@@ -151,6 +214,10 @@ Returns a channel that will immediately close with the first value sent to it.
 
 
 #### [send.async]()
+
+**[`Callback`][]** version of `send`. Does not require a suspendible caller.
+
+> `fn`: (`value`, `channel`, `closed`) → void
 
     send.async = (channel, value, fn) ->
       callback  = Callback.alloc fn
@@ -164,11 +231,15 @@ Returns a channel that will immediately close with the first value sent to it.
 
 ### [select]()
 
+Creates a **[`Selector`][]** which defines a **select expression**.
+
     {select} = Selector
 
 
 
 ### [poll]()
+
+Performs a `receive` channel operation iff one can be completed immediately.
 
     poll = ->
       switch arguments.length
@@ -181,6 +252,8 @@ Returns a channel that will immediately close with the first value sent to it.
 
 ### [offer]()
 
+Performs a `send` channel operation iff one can be completed immediately.
+
     offer = ->
       switch arguments.length
         when 1 then [value] = arguments; channel = Process.current()._out()
@@ -192,6 +265,8 @@ Returns a channel that will immediately close with the first value sent to it.
 
 ### [timeout]()
 
+Returns a channel that closes after a certain number of `ms` (milliseconds).
+
     timeout = (ms, fn, args...) ->
       ch = chan()
       if typeof ms is 'function' then [fn, ms] = arguments
@@ -201,6 +276,10 @@ Returns a channel that will immediately close with the first value sent to it.
 
 
 ### [sleep]()
+
+Wraps a `timeout` channel in a `receive` operation.
+
+> `yield sleep(1)`
 
     sleep = -> receive timeout arguments...
 
@@ -238,3 +317,15 @@ Returns a channel that will immediately close with the first value sent to it.
 ### Forward imports
 
     Multicast = require './multicast'
+
+
+
+
+
+[`Process`]:   ../process.coffee.md
+[`Channel`]:   ../channel.coffee.md
+[`Buffer`]:    ../buffer.coffee.md
+[`Callback`]:  ../callback.coffee.md
+[`Selector`]:  ../selector.coffee.md
+[`Inlet`]:     ../channel.coffee.md#inlet-outlet
+[`Outlet`]:    ../channel.coffee.md#inlet-outlet
