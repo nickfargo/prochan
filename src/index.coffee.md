@@ -322,10 +322,10 @@ Wraps a `timeout` channel in a `receive` operation.
 
 
 
-[`Process`]:   ../process.coffee.md
-[`Channel`]:   ../channel.coffee.md
-[`Buffer`]:    ../buffer.coffee.md
-[`Callback`]:  ../callback.coffee.md
-[`Selector`]:  ../selector.coffee.md
-[`Inlet`]:     ../channel.coffee.md#inlet-outlet
-[`Outlet`]:    ../channel.coffee.md#inlet-outlet
+[`Process`]:   process.coffee.md
+[`Channel`]:   channel.coffee.md
+[`Buffer`]:    buffer.coffee.md
+[`Callback`]:  callback.coffee.md
+[`Selector`]:  selector.coffee.md
+[`Inlet`]:     channel.coffee.md#inlet-outlet
+[`Outlet`]:    channel.coffee.md#inlet-outlet
