@@ -88,7 +88,7 @@ processes hierarchically.
 
 ### [go]()
 
-> (`generator`: Function | Iterator, `[args]`? : Array) → **[`Outlet`][]**
+> (`generator`: Function | Iterator, `args?`: Array) → **[`Outlet`][]**
 
 Like `proc`, spawns a `Process`, but returns its I/O **channel outlet**. The
 final value `receive`d from the channel outlet will be the return value of the
@@ -125,9 +125,9 @@ Creates a `Channel` with one of the built-in **[`Buffer`][]** types.
 
 Returns a `Channel` that will immediately `close` with the first value sent.
 
-Acts as a *promise*, in that any processes that `receive` from the channel will
-block if a value has not yet been sent, and thereafter will immediately receive
-the closing value.
+Acts as a *promise*, in that, if a value has not yet been sent, then processes
+that `receive` from the channel will block, and once a value has been sent,
+processes will thenceforth immediately `receive` that value from the channel.
 
 > Alias: `chan.promise`
 
