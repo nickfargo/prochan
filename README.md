@@ -1,6 +1,6 @@
 # prochan.js
 
-I/O-enabled communicating sequential **[`proc`][]esses** via **[`chan`][]nels**.
+I/O-enabled communicating sequential **[`proc`](https://github.com/nickfargo/prochan/blob/master/src/index.coffee.md#proc)esses** via **[`chan`](https://github.com/nickfargo/prochan/blob/master/src/index.coffee.md#chan)nels**.
 
 ---
 
