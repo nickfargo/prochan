@@ -22,7 +22,7 @@
         for (i = j = 1; j <= 10; i = ++j) {
           (yield send(ch1, i));
         }
-        ch1.close();
+        ch1.close('bar');
         return 'foo';
       });
       p2 = proc(function*() {
@@ -107,7 +107,7 @@
         for (i = j = 1; j <= 10; i = ++j) {
           (yield send(ch1, i));
         }
-        ch1.close();
+        ch1.close('bar');
         return 'foo';
       });
       m.add(p2 = proc(function*() {

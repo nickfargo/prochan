@@ -16,7 +16,7 @@
 
         p1 = proc ->
           yield send ch1, i for i in [1..10]
-          do ch1.close
+          ch1.close 'bar'
           'foo'
         p2 = proc -> yield receive ch2 until ch2.isDone()
         p3 = proc -> yield receive ch3 until ch3.isDone()
@@ -50,7 +50,7 @@
 
         p1 = proc ->
           yield send ch1, i for i in [1..10]
-          do ch1.close
+          ch1.close 'bar'
           'foo'
 
         m.add p2 = proc -> yield receive() until proc.isClosed()

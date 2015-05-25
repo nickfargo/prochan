@@ -30,7 +30,7 @@
               return @yield receive @mult.source
             when 2
               value = input
-              if @mult.source.isDone()
+              if chan.isFinal()
                 for id, relay of @mult.relays
                   relay.channel.close value if relay.shouldClose
                   do relay.free
