@@ -1,6 +1,6 @@
 # prochan.js
 
-I/O-enabled communicating sequential **[`proc`][]esses** via **[`chan`][]nels**.
+I/O-enabled communicating sequential **`proc`esses** via **`chan`nels**.
 
 ---
 
@@ -69,7 +69,7 @@ import {proc, chan, receive, send, select} = 'prochan';
 ### Basic operations
 
 
-#### Processes: [`proc`][]
+#### Processes: `proc`
 
 Spawning a process is performed by calling the `proc` function, and passing it a generator function. Outwardly this corresponds to calling `go` or similar in other environments:
 
@@ -80,7 +80,7 @@ let p = proc( function* () {
 // >>> Process
 ```
 
-The key distinction of `proc` is that, whereas a call to `go` or similar would return a single-use channel as an indirection to the eventual return value of a “goroutine”, `proc` returns an actual **[`Process`][]** object.
+The key distinction of `proc` is that, whereas a call to `go` or similar would return a single-use channel as an indirection to the eventual return value of a “goroutine”, `proc` returns an actual **`Process`** object.
 
 However, given equivalent generator functions, the `Process` returned by `proc` may still be consumed in the same manner as the channel returned by `go`:
 
@@ -92,9 +92,9 @@ However, given equivalent generator functions, the `Process` returned by `proc` 
 > _Discussed further below: **[Process I/O](#process-io)**._
 
 
-#### Channels: [`chan`][]
+#### Channels: `chan`
 
-The `chan` function is used in generally familiar fashion to construct an unbuffered, buffered, and/or transduced **[`Channel`][]**:
+The `chan` function is used in generally familiar fashion to construct an unbuffered, buffered, and/or transduced **`Channel`**:
 
 ```js
 let ch1 = chan();
@@ -116,7 +116,7 @@ let ch6 = chan(transducer);  // No explicit buffering, behaves as unbuffered
 > _Discussed further below: **[Transduction](#transduction)**._
 
 
-#### Communication: [`receive`][], [`send`][]
+#### Communication: `receive`, `send`
 
 Basic communications via channels are performed inside a process by `yield`ing the effect of a 1-ary `receive` or 2-ary `send` operation (aliased to `take` and `put`, respectively):
 
@@ -130,9 +130,9 @@ proc( function* () {
 });
 ```
 
-#### Selection: [`select`][]
+#### Selection: `select`
 
-In **prochan** the `select` operation (aliased to `alts`) returns a **[`Selector`][] generator**, intended for immediate use inside a *delegated yield* (`yield*`) expression:
+In **prochan** the `select` operation (aliased to `alts`) returns a **`Selector` generator**, intended for immediate use inside a *delegated yield* (`yield*`) expression:
 
 ```js
 proc( function* () {
@@ -173,11 +173,11 @@ By default processes are constructed without I/O channels; an unbuffered channel
 
 In **prochan** channels impose no domain restrictions on input values; any value may be conveyed over the channel unless otherwise specified by the user. In particular, channels do not appropriate `null` or `undefined`, nor introduce any other sentinel identity; no such entity is prohibited from being conveyed as its own instrinsic value through the channel.
 
-A `Channel` may also be **closed** with an optional final **result value**. This is generally analogous to the return value of a function: by default a channel’s result value is `undefined`, but may be set specifically to any value provided in the call to the channel’s idempotent [`close`][] method. Once a channel is both *closed* and *empty* it becomes **done**, after which any process that `receive`s from the channel will have the result value conveyed immediately to it.
+A `Channel` may also be **closed** with an optional final **result value**. This is generally analogous to the return value of a function: by default a channel’s result value is `undefined`, but may be set specifically to any value provided in the call to the channel’s idempotent `close` method. Once a channel is both *closed* and *empty* it becomes **done**, after which any process that `receive`s from the channel will have the result value conveyed immediately to it.
 
 This design leaves channel domain semantics entirely to the discretion of process authors, who may establish between themselves, if necessary, the meanings of any special entities (e.g., whether or not some particular value `receive`d from a channel — such as `null` or `undefined`, perhaps — is indeed meant to be interpreted as a special in-band “done” signal).
 
-However, with respect to such signaling, it is also safe, sufficient, and generally preferable for the current process to determine a channel’s “done” state out-of-band, by calling the [`chan.isFinal`][] predicate immediately after `yield receive`ing from the channel.
+However, with respect to such signaling, it is also safe, sufficient, and generally preferable for the current process to determine a channel’s “done” state out-of-band, by calling the `chan.isFinal` predicate immediately after `yield receive`ing from the channel.
 
 ```js
 // Process whose sole responsibility is to read from a channel
@@ -292,17 +292,3 @@ Here both `ch1` and `ch2` are unbuffered channels. To exhibit unbuffered synchro
 [2]: https://github.com/ubolonton/js-csp
 [3]: https://github.com/nickfargo/prochan/tree/master/src
 [4]: http://coffeescript.org/#literate
-
-
-[`proc`]: https://github.com/nickfargo/prochan/blob/master/src/index.coffee.md#proc
-[`chan`]: https://github.com/nickfargo/prochan/blob/master/src/index.coffee.md#chan
-[`receive`]: https://github.com/nickfargo/prochan/blob/master/src/index.coffee.md#receive
-[`send`]: https://github.com/nickfargo/prochan/blob/master/src/index.coffee.md#send
-[`select`]: https://github.com/nickfargo/prochan/blob/master/src/selector.coffee.md#select
-[`close`]: https://github.com/nickfargo/prochan/blob/master/src/channel.coffee.md#close
-[`isDone`]: https://github.com/nickfargo/prochan/blob/master/src/channel.coffee.md#channel-state-predicates
-
-
-[`Process`]: https://github.com/nickfargo/prochan/blob/master/src/process.coffee.md
-[`Channel`]: https://github.com/nickfargo/prochan/blob/master/src/channel.coffee.md
-[`Selector`]: https://github.com/nickfargo/prochan/blob/master/src/selector.coffee.md
