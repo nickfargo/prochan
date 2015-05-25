@@ -177,7 +177,8 @@ receive from the **in** I/O channel of the current process.
 
 #### [receive.async]()
 
-**[`Callback`][]** version of `receive`. Does not require a suspendible caller.
+**[`Callback`][]** version of `receive`. Does not need to be called from within
+a process.
 
 > `fn`: (`value`, `channel`, `done`) → void
 
@@ -219,7 +220,8 @@ to the **out** I/O channel of the current process.
 
 #### [send.async]()
 
-**[`Callback`][]** version of `send`. Does not require a suspendible caller.
+**[`Callback`][]** version of `send`. Does not need to be called from within a
+process.
 
 > `fn`: (`value`, `channel`, `closed`) → void
 
@@ -235,7 +237,7 @@ to the **out** I/O channel of the current process.
 
 ### [select]()
 
-Creates a **[`Selector`][]** which defines a **select expression**.
+Creates a **[`Selector`][]**, which reifies a **select expression**.
 
     {select} = Selector
 
