@@ -10,8 +10,8 @@ Compares favorably to the excellent **[js-csp](https://github.com/ubolonton/js-c
 
 Explores in particular the treatment of processes as first-class I/O primitives, such as this would imply:
 
-- interface and composability characteristics in common with proper channels
-- that a process communicating via I/O is essentially just an extension of the notion of a “logical channel”
+- common interface and composability characteristics shared by processes and proper channels
+- that a process communicating via I/O is itself an expression of a “logical channel”
 - that such processes are generally interchangeable with channels for any channel-based API
 
 
@@ -26,7 +26,10 @@ Explores in particular the treatment of processes as first-class I/O primitives,
     - `send` (`put`)
     - `select` (`alts`)
 - Support for affixing functional transforms to channels via Clojure-style **transducers**
-- Structural optimizations for **performance**, particularly at scale
+- Structural simplifications and optimizations for **performance**, particularly at scale
+  - Constant-time arbitrary valued buffering queues, with no amortized linear copying
+  - Space-efficient doubly-linked-list internal queues, with immediate splicing, no deferred GC
+  - Pooled instances of internal classes
 - Clear, approachable [**annotated source code**](https://github.com/nickfargo/prochan/tree/master/src/index.coffee.md)
 
 
