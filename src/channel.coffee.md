@@ -29,8 +29,8 @@ declared by a `select` expression.
 
 Essential channel state is represented as five bits inside a `flags` integer.
 
-`CLOSED` is set permanently by calling `Channel::close`, which prevents further
-`send` operations on the channel.
+`CLOSED` is set permanently by calling [`Channel::close`](#close), which
+prevents further `send` operations on the channel.
 
 `EMPTY` and `FULL` are reflections of the state of the channel’s `Buffer`, and
 more precisely, indications as to how the channel will behave in response to a
@@ -40,10 +40,10 @@ An unbuffered channel is always both `EMPTY` and `FULL`.
 
 `PUSHED` and `PULLED` indicate the direction of the **await queue**, which is
 comprised of `Awaiter`s that are either all **senders** or all **receivers**,
-respectively. A channel may be `PUSHED` by a queue of senders, `PULLED` by a
-queue of receivers, or neither, but never both.
+respectively. At any instant, a channel may be `PUSHED` by a queue of senders,
+`PULLED` by a queue of receivers, or neither, but never both.
 
-> *Further reading:* [“The bits of channel state”][0]
+> *Further reading:* **[“The bits of channel state”][0]**
 
       CLOSED = 0x10
       EMPTY  = 0x08
@@ -91,7 +91,8 @@ respectively.
 
 The **result** of a channel is conveyed to **receivers** once the channel is
 **done**, i.e. is both **closed** and **empty**. By default this value is
-`undefined`, but may be set to any value exactly once in the call to `close`.
+`undefined`, but may be set to any value exactly once in the call to
+[`close`](#close).
 
         @result = undefined
 
@@ -119,6 +120,11 @@ Attenuations of a `channel`’s inbound and outbound ports.
 
 #### Channel state predicates
 
+Quickly computable predicates that make specific queries into the current state
+of the channel.
+
+*See:* **[“The bits of channel state”][0]**
+
       stateIsValid:       -> 1 << @flags & 0x11117351
       canProcessSend:     -> 1 << @flags & 0x00002301
       canProcessReceive:  -> 1 << @flags & 0x00114051
@@ -136,17 +142,19 @@ Attenuations of a `channel`’s inbound and outbound ports.
 
 > (`result`: any) → `result`|`undefined`
 
-Seals off `this` channel’s **inlet**, preventing any further `send` operations,
-and `dispatch`es any awaiting senders or receivers. Remaining buffered values
-may continue to be `receive`d in the future. Once the channel is **empty**, it
-will convey `result` to all subsequent `receive` operations.
+Seals off `this` channel’s **inlet**, preventing any further
+[`send`](index.coffee.md#send) operations, and [`dispatch`](#dispatch)es any
+awaiting senders or receivers. Remaining buffered values may continue to be
+[`receive`](index.coffee.md#receive)d in the future. Once the channel is
+**empty**, it will convey `result` to all subsequent `receive` operations.
 
 ##### State table
 
-> A binary value in **boldface** is an *essential* bit (column) of a particular
-  case / condition set (row), while those in normal weight are, with respect to
-  channel semantics, *logical implications* of the essential bits. An empty
-  cell marks a bit that is *inessential* for a particular case.
+> For each of the state tables below: a binary value in **boldface** is an
+  *essential* bit (column) of a particular case / condition set (row); those in
+  normal weight are, with respect to channel semantics, *logical implications*
+  of the essential bits; an empty cell denotes a bit that is variable, or
+  *inessential* to a particular case’s definition.
 
 `flags`        | `CLOSED`  |  `EMPTY`  |  `FULL`   | `PUSHED`  | `PULLED`  |
 -------------- |:---------:|:---------:|:---------:|:---------:|:---------:|
@@ -272,8 +280,8 @@ two arguments then `awaiter` is a **sender** conveying a `value`.
 
 #### [dispatch]()
 
-Releases the `head` `Awaiter` from the **await queue** and fulfills its
-communication request.
+Releases the `head` [`Awaiter`](awaiter.coffee.md) from the **await queue** and
+fulfills its communication request.
 
 A **receiver** will `proceed` with the `value` it was awaiting, along with a
 boolean `isFinal` indicating whether the channel is now **done**.
@@ -296,12 +304,13 @@ indicating whether the channel is now **closed**.
 
 > (`operation`: Operation) → `null`
 
-Extracts an `operation` from the await queue.
+Extracts an `operation` from the **await queue**.
 
-Called from `Operation::free`, in turn from `Selector/clear`, after a selector
-has committed to one of its operations.
+Called from [`Operation::free`](operation.coffee.md#free), in turn from
+[`Selector/clear`](selector.coffee.md#clear), after a **selector** has
+committed to one of its operations.
 
-> Could this be generalized to `awaiter`? Might `Callback`s also need `cancel`?
+> Could this be generalized to `Awaiter`? Might `Callback`s also need `cancel`?
 
       cancel: (operation) ->
         {_prev, _next} = operation
