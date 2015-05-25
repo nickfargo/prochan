@@ -280,9 +280,7 @@ Here both `ch1` and `ch2` are unbuffered channels. To exhibit unbuffered synchro
 
 
 
----
 
-👋
 
 
 
