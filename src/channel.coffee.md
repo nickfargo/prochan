@@ -194,7 +194,7 @@ transduction step may force early termination.
         switch @flags
           when 0, 8
             @buffer.enqueue value
-            sender.value = yes
+            sender.register yes, no
           when 4, 6, 12, 14
             @detain sender, value
             no
@@ -204,9 +204,9 @@ transduction step may force early termination.
               @dispatch @buffer.dequeue(), no until @stateIsValid()
             else # 13 only (9 cannot be unbuffered)
               @dispatch value, no
-            sender.value = yes
+            sender.register yes, no
           when 16, 20, 24, 28
-            sender.value = no
+            sender.register no, yes
           else throw new Error "Invalid channel state"
 
 
@@ -239,7 +239,6 @@ transduction step may force early termination.
             @buffer.enqueue @dispatch yes, no until @stateIsValid()
           when 8, 9, 12, 13
             @detain receiver
-            # TODO?: value = @EMPTY
           when 14
             if @buffer?
               @buffer.enqueue @dispatch yes, no until @flags isnt 14
@@ -248,9 +247,10 @@ transduction step may force early termination.
               value = @dispatch yes, no
           when 24, 28
             if @buffer? then do @buffer.free; @buffer = null
+            done = yes
             value = @result
           else throw new Error "Invalid channel state"
-        receiver.value = value
+        receiver.register value, done or no
 
 
 #### [detain]()

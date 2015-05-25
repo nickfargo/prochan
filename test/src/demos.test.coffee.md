@@ -25,3 +25,17 @@
         yield send table, ball = new Ball       # put a ball on the table
         yield sleep 20                          # wait while players play
         assert.equal ball, yield receive table  # take ball off the table
+
+
+      it "can do race-free `done` detection", async ->
+        sanity = 12
+
+        p = proc -> yield send i for i in [1..10]; 'foo'
+
+        assert.equal 'foo', yield receive proc ->
+          loop
+            value = yield receive p; done = chan.isFinal()
+            if done
+              return value
+            else if --sanity < 0
+              throw new Error "Insanity"

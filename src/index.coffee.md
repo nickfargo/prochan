@@ -142,6 +142,11 @@ processes will thenceforth immediately `receive` that value from the channel.
       ch
 
 
+#### [chan.isFinal]()
+
+    chan.isFinal = -> Process.current().isFinal
+
+
 
 ### [receive]()
 

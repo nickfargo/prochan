@@ -60,4 +60,9 @@ awaiter.isFinal :: (Channel, Function) => boolean
 ### Methods
 
       block: (@awaitee, @value) ->
+
       proceed: (value, isFinal) ->
+
+      register: (value, isFinal) ->
+        @isFinal = isFinal
+        @value = value

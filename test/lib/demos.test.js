@@ -9,7 +9,7 @@
   async = proc.async;
 
   describe("Demos:", function() {
-    return it("go ping-pong", async(function*() {
+    it("go ping-pong", async(function*() {
       var Ball, ball, player, table;
       table = chan();
       Ball = function() {
@@ -31,6 +31,29 @@
       (yield send(table, ball = new Ball));
       (yield sleep(20));
       return assert.equal(ball, (yield receive(table)));
+    }));
+    return it("can do race-free `done` detection", async(function*() {
+      var p, sanity;
+      sanity = 12;
+      p = proc(function*() {
+        var i, j;
+        for (i = j = 1; j <= 10; i = ++j) {
+          (yield send(i));
+        }
+        return 'foo';
+      });
+      return assert.equal('foo', (yield receive(proc(function*() {
+        var done, value;
+        while (true) {
+          value = (yield receive(p));
+          done = chan.isFinal();
+          if (done) {
+            return value;
+          } else if (--sanity < 0) {
+            throw new Error("Insanity");
+          }
+        }
+      }))));
     }));
   });
 

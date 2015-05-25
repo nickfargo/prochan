@@ -216,13 +216,13 @@ communication to the process’s I/O ports.
 
       enqueue: (sender, value) ->
         if @flags & TERMINATED
-          sender.value = no
+          sender.register no, yes
         else
           @_in().enqueue arguments...
 
       dequeue: (receiver) ->
-        if @flags & TERMINATED
-          receiver.value = @value
+        if @flags & TERMINATED and not @cout?
+          receiver.register @value, yes
         else
           @_out().dequeue arguments...
 
@@ -273,8 +273,7 @@ blocked **sender** process conveys its value to be sent into the channel.
         do @throw unless @flags & (INCIPIENT | BLOCKED)
         @awaitee = null
         prior = @value
-        @value = value
-        @isFinal = isFinal
+        @register value, isFinal
         schedule this
         prior
 
