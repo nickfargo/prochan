@@ -9,16 +9,16 @@
 
 
 
-## [Channel]()
+## Channel
 
-A **channel** is a *spatiotemporal queue*, responsible for both *conveying*
-data from one **logical process** to another, and *synchronizing* the execution
-of communicating processes.
+A **channel** is a *spatiotemporal queue* — responsible both for *conveying*
+data from one **logical process** to another, and for *synchronizing* the
+execution of communicating processes as necessary.
 
-From a channel’s perspective, logical processes are generalized to `Awaiter`s.
-A concrete `Awaiter` instance is either an actual `Process`, or an indirection
-to a process such as a `Callback` used in an async operation or an `Operation`
-declared by a `select` expression.
+From a channel’s perspective, logical processes generalize to **awaiters**. A
+concrete [`Awaiter`][] instance is either an actual [`Process`][], or an
+indirection to a process, such as a [`Callback`][] used in an async operation,
+or an [`Operation`][] declared by a [`select`][] expression.
 
     class Channel
 
@@ -29,19 +29,19 @@ declared by a `select` expression.
 
 Essential channel state is represented as five bits inside a `flags` integer.
 
-`CLOSED` is set permanently by calling [`Channel::close`](#close), which
-prevents further `send` operations on the channel.
+`CLOSED` is set permanently by calling [`close`][], which prevents further
+[`send`][] operations on the channel.
 
-`EMPTY` and `FULL` are reflections of the state of the channel’s `Buffer`, and
-more precisely, indications as to how the channel will behave in response to a
-channel operation. A channel with a non-fixed buffer (e.g. sliding, dropping)
-can always immediately perform a `send`, and accordingly can never be `FULL`.
-An unbuffered channel is always both `EMPTY` and `FULL`.
+`EMPTY` and `FULL` are reflections of the state of the channel’s [`Buffer`][],
+and more precisely, indications as to how the channel will behave in response
+to a channel operation. A channel with a non-fixed buffer (e.g. sliding,
+dropping) can always immediately perform a `send`, and accordingly can never
+be `FULL`. An unbuffered channel is always both `EMPTY` and `FULL`.
 
 `PUSHED` and `PULLED` indicate the direction of the **await queue**, which is
-comprised of `Awaiter`s that are either all **senders** or all **receivers**,
-respectively. At any instant, a channel may be `PUSHED` by a queue of senders,
-`PULLED` by a queue of receivers, or neither, but never both.
+comprised of [`Awaiter`][]s that are, respectively, either all **senders** or
+all **receivers**. At any instant, a channel may be `PUSHED` by a queue of
+senders, `PULLED` by a queue of receivers, or neither, but never both.
 
 > *Further reading:* **[“The bits of channel state”][0]**
 
@@ -81,8 +81,8 @@ Essential aspects of the channel’s state are encoded as bits in `flags`.
         @flags = if @buffer?.size > 0 then EMPTY else EMPTY | FULL
 
 The **await queue** is a doubly-linked list, whose ends are `head` and `tail`,
-comprised of `Awaiter`s. The *direction* of the await queue is specified by the
-presence of either the `PUSHED` or `PULLED` bit in `flags`, which indicates
+comprised of [`Awaiter`][]s. The *direction* of the await queue is specified by
+the presence of either the `PUSHED` or `PULLED` bit in `flags`, which indicates
 whether the queued awaiters are either all **senders** or all **receivers**,
 respectively.
 
@@ -101,7 +101,7 @@ The **result** of a channel is conveyed to **receivers** once the channel is
 ### Private classes
 
 
-#### [Inlet](), [Outlet]()
+#### Inlet, Outlet
 
 Attenuations of a `channel`’s inbound and outbound ports.
 
@@ -120,8 +120,7 @@ Attenuations of a `channel`’s inbound and outbound ports.
 
 #### Channel state predicates
 
-Quickly computable predicates that make specific queries into the current state
-of the channel.
+Quickly computable specific queries into the current state of the channel.
 
 *See:* **[“The bits of channel state”][0]**
 
@@ -132,21 +131,21 @@ of the channel.
       isDone:             -> 1 << @flags & 0x11000000
 
 
-#### [in](), [out]()
+#### in, out
 
       in: -> new Inlet this
       out: -> new Outlet this
 
 
-#### [close]()
+#### close
 
 > (`result`: any) → `result`|`undefined`
 
-Seals off `this` channel’s **inlet**, preventing any further
-[`send`](index.coffee.md#send) operations, and [`dispatch`](#dispatch)es any
-awaiting senders or receivers. Remaining buffered values may continue to be
-[`receive`](index.coffee.md#receive)d in the future. Once the channel is
-**empty**, it will convey `result` to all subsequent `receive` operations.
+Seals off `this` channel’s **inlet**, preventing any further [`send`][]
+operations, and [`dispatch`][]es any awaiting senders or receivers. Remaining
+buffered values may continue to be [`receive`][]d in the future. Once the
+channel is **empty**, it will convey `result` to all subsequent `receive`
+operations.
 
 ##### State table
 
@@ -179,7 +178,7 @@ awaiting senders or receivers. Remaining buffered values may continue to be
         @result = result
 
 
-#### [enqueue]()
+#### enqueue
 
 > (`sender`: Awaiter, `value`: any) → boolean
 
@@ -218,7 +217,7 @@ transduction step may force early termination.
           else throw new Error "Invalid channel state"
 
 
-#### [dequeue]()
+#### dequeue
 
 > (`receiver`: Awaiter) → any
 
@@ -261,7 +260,7 @@ transduction step may force early termination.
         receiver.register value, done or no
 
 
-#### [detain]()
+#### detain
 
 Adds `awaiter` to the **await queue**, causing it to `block` until the channel
 is ready to communicate with it.
@@ -278,10 +277,10 @@ two arguments then `awaiter` is a **sender** conveying a `value`.
         awaiter.block this, value
 
 
-#### [dispatch]()
+#### dispatch
 
-Releases the `head` [`Awaiter`](awaiter.coffee.md) from the **await queue** and
-fulfills its communication request.
+Releases the `head` [`Awaiter`][] from the **await queue** and fulfills its
+communication request.
 
 A **receiver** will `proceed` with the `value` it was awaiting, along with a
 boolean `isFinal` indicating whether the channel is now **done**.
@@ -300,15 +299,14 @@ indicating whether the channel is now **closed**.
         awaiter.proceed value, isFinal
 
 
-#### [cancel]()
+#### cancel
 
 > (`operation`: Operation) → `null`
 
 Extracts an `operation` from the **await queue**.
 
-Called from [`Operation::free`](operation.coffee.md#free), in turn from
-[`Selector/clear`](selector.coffee.md#clear), after a **selector** has
-committed to one of its operations.
+Called from [`Operation::free`][], in turn from [`Selector/clear`][], after a
+**selector** has committed to one of its operations.
 
 > Could this be generalized to `Awaiter`? Might `Callback`s also need `cancel`?
 
@@ -355,3 +353,19 @@ committed to one of its operations.
 
 
 [0]: https://gist.github.com/nickfargo/8a89b237c09ee8af0fc5
+
+
+[`close`]: #close
+[`dispatch`]: #dispatch
+
+[`Awaiter`]: awaiter.coffee.md
+[`Buffer`]: buffer.coffee.md
+[`Callback`]: callback.coffee.md
+[`Operation`]: operation.coffee.md
+[`Operation::free`]: operation.coffee.md#free
+[`Selector/clear`]: selector.coffee.md#clear
+[`Process`]: process.coffee.md
+
+[`send`]: index.coffee.md#send
+[`receive`]: index.coffee.md#receive
+[`select`]: selector.coffee.md#select

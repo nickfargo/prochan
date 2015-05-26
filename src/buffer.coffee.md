@@ -7,7 +7,7 @@
 
 
 
-## [Buffer]()
+## Buffer
 
 Reference implementation for channel buffers with optional transducer.
 
@@ -60,7 +60,7 @@ Expanding transduction steps may cause the buffer to become overfilled.
       isFull  : -> @queue.length >= @size
 
 
-#### [ingest]()
+#### ingest
 
       ingest: (input) ->
         if @transform?
@@ -72,7 +72,7 @@ Expanding transduction steps may cause the buffer to become overfilled.
           input
 
 
-#### [update]()
+#### update
 
       update: ->
         @flags = (if @isEmpty() then EMPTY else 0) |
@@ -81,7 +81,7 @@ Expanding transduction steps may cause the buffer to become overfilled.
         return
 
 
-#### [close]()
+#### close
 
 Allow upstack stateful transducers to clean up after themselves.
 
@@ -90,7 +90,7 @@ Allow upstack stateful transducers to clean up after themselves.
         return
 
 
-#### [enqueue]()
+#### enqueue
 
       enqueue: (input) ->
         throw new Error unless not @isFull() or @size is 0
@@ -99,7 +99,7 @@ Allow upstack stateful transducers to clean up after themselves.
         yes
 
 
-#### [dequeue]()
+#### dequeue
 
       dequeue: ->
         throw new Error unless not @isEmpty()

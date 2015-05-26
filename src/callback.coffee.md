@@ -8,12 +8,12 @@
 
 
 
-## [Callback]()
+## Callback
 
-Casts a callback `fn` as an `Awaiter`, so that it may be queued in a `Channel`,
-and thus participate in channel communications.
+Casts a callback `fn` as an [`Awaiter`][], so that it may be queued in a
+[`Channel`][], and thus participate in channel communications.
 
-Used by (`send.async`|`receive.async`).
+Used by ([`send.async`][]|[`receive.async`][]).
 
     pooled class Callback extends Awaiter
 
@@ -26,3 +26,12 @@ Used by (`send.async`|`receive.async`).
         @fn?.call null, value, @awaitee, isFinal
         do @free
         prior
+
+
+
+
+
+[`Awaiter`]: awaiter.coffee.md
+[`Channel`]: channel.coffee.md
+[`send.async`]: index.coffee.md#sendasync
+[`receive.async`]: index.coffee.md#receiveasync

@@ -8,31 +8,32 @@
 
 
 
-## [Process]()
+## Process
 
 A **logical process** is a steppable, suspendable, independently executable
 routine, which both *communicates* with other logical processes exclusively via
-operations that `send` and `receive` data over **channels**, and *synchronizes*
-with other processes by suspending execution as necessary until such a channel
-operation can be facilitated.
+operations that [`send`][] and [`receive`][] data over **channels**, and
+*synchronizes* with other processes by suspending execution as necessary until
+such a channel operation can be facilitated.
 
 A `Process` instance wraps an *iterable* object. Conventionally the iterable
 object is expressed as a `generator` function that must `yield` immediately
-upon invoking any **channel operation** such as `send`, `receive`, or `select`.
-With respect to a process, a channel operation is *non-blocking* if it can be
-facilitated immediately, and *blocking* if it cannot.
+upon invoking any **channel operation** such as `send`, `receive`, or
+[`select`][]. With respect to a process, a channel operation is *non-blocking*
+if it can be facilitated immediately, and *blocking* if it cannot.
 
 A process that is `BLOCKED` is waiting for a channel operation to complete, and
 is situated in that channel’s **await queue**.
 
 A process that is `SCHEDULED` is situated in the process **run queue**.
 
-A **process run** corresponds to a single invocation of the `ioc` function on a
-process that is `RUNNING`. The process’s `generator` function will run through
-any iterations that `yield` following a *non-blocking channel operation*, and
-on either to the next *blocking channel operation*, at which point the process
-will become `BLOCKED` via `Process::block`, or to completion, upon which the
-process will become `TERMINATED` via `Process::exit`.
+A **process run** corresponds to a single invocation of the [`ioc`][] function
+on the process that is `RUNNING`, and thus is the unique **current process**.
+The process’s `generator` function will run through any iterations that `yield`
+following a *non-blocking channel operation*, and on either to the next
+*blocking channel operation*, at which point the process will become `BLOCKED`
+via [`Process::block`][], or to completion, upon which the process will become
+`TERMINATED` via [`Process::exit`][].
 
 Process runs are *batched*, such that during a single turn of the environment’s
 event loop, up to a certain limited number of *process runs* are performed on
@@ -66,7 +67,7 @@ Top-level process variables and collections.
 
 ### Constructor
 
-> Called from `Process.spawn`.
+> Called from [`Process.spawn`][].
 
       constructor: (generator, args) ->
         super
@@ -95,9 +96,9 @@ Top-level process variables and collections.
 ### Private functions
 
 
-#### [schedule]()
+#### schedule
 
-> Called from `Process::proceed`.
+> Called from [`Process::proceed`][].
 
 Schedules a process `p` for execution by pushing it onto the **run queue** and
 ensuring that a batch of **process runs** will be performed on the next turn of
@@ -110,9 +111,9 @@ the environment’s event loop.
         return
 
 
-#### [batch]()
+#### batch
 
-> Called from `schedule`.
+> Called from [`schedule`][].
 
 Performs a **process run** on each process in a finite batch of processes
 pulled sequentially from the **run queue**. The number of processes to be run
@@ -127,9 +128,9 @@ is capped absolutely by `BATCH_SIZE`.
         return
 
 
-#### [ioc]()
+#### ioc
 
-> Called from `batch`.
+> Called from [`batch`][].
 
 The inversion-of-control loop performs a single **process run** on process `p`
 by stepping through its `iterator` until the associated generator function
@@ -154,6 +155,9 @@ either `yield`s to a blocking channel operation or `return`s.
 
 ### Static functions
 
+
+#### spawn
+
       @spawn = (generator, args) ->
         throw new Error "Arity" if arguments.length is 0
         p = new Process generator, args
@@ -161,12 +165,16 @@ either `yield`s to a blocking channel operation or `return`s.
         p
 
 
+#### current
+
       @current = ->
         if current?.flags & RUNNING
           current
         else
           Process.throw "Not in process", current
 
+
+#### throw
 
       @throw = (message = "<no message>", p) ->
         if p?
@@ -178,6 +186,8 @@ either `yield`s to a blocking channel operation or `return`s.
             """
         throw new Error message
 
+
+#### dump
 
       @dump = (style = 'list') -> switch style
         when 'list'
@@ -211,8 +221,8 @@ I/O channel state predicates.
       isClosed:          -> !!@cin?.isClosed()
       isDone:            -> !!@cout?.isDone()
 
-Providing a `Process` to an operation that expects a `Channel` will route the
-communication to the process’s I/O ports.
+Providing a `Process` to an operation that expects a [`Channel`][] will route
+the communication to the process’s I/O ports.
 
       enqueue: (sender, value) ->
         if @flags & TERMINATED
@@ -227,7 +237,7 @@ communication to the process’s I/O ports.
           @_out().dequeue arguments...
 
 
-#### State predicates
+#### Process state predicates
 
       isScheduled:  -> !!( @flags & SCHEDULED )
       isRunning:    -> !!( @flags & RUNNING )
@@ -235,12 +245,12 @@ communication to the process’s I/O ports.
       isTerminated: -> !!( @flags & TERMINATED )
 
 
-#### [block]()
+#### block
 
-> Called from `Channel::detain`, `Selector::next`.
+> Called from [`Channel::detain`][], [`Selector::next`][].
 
-Causes `ioc` to break its loop of stepping through the process `iterator`. The
-process will resume after the blocking channel calls `proceed`.
+Causes [`ioc`][] to break its loop of stepping through the process `iterator`.
+The process will resume when the blocking channel calls [`Process::proceed`][].
 
       block: ->
         super
@@ -249,9 +259,10 @@ process will resume after the blocking channel calls `proceed`.
         this
 
 
-#### [proceed]()
+#### proceed
 
-> Called from `Process.spawn`, `Channel::dispatch`, `Selector::proceedWith`.
+> Called from [`Process.spawn`][], [`Channel::dispatch`][],
+  [`Selector::proceedWith`][].
 
 Either starts a process or completes a channel operation that the process has
 been awaiting, and schedules the incipient or unblocked process to be run.
@@ -278,7 +289,7 @@ blocked **sender** process conveys its value to be sent into the channel.
         prior
 
 
-#### [exit]()
+#### exit
 
 Orphans each child process before terminating normally.
 
@@ -290,7 +301,7 @@ Orphans each child process before terminating normally.
         @kill null, value
 
 
-#### [kill]()
+#### kill
 
 Terminates the process and propagates termination to all child processes.
 
@@ -343,3 +354,23 @@ Terminates the process and propagates termination to all child processes.
         flags = {INCIPIENT, SCHEDULED, RUNNING, BLOCKED, TERMINATED, ERROR}
         n = 0; str = (n++; k for k,v of flags when @flags & v).join ' | '
         if n is 1 then str else "(#{str})"
+
+
+
+
+
+[`send`]: index.coffee.md#send
+[`receive`]: index.coffee.md#receive
+[`select`]: selector.coffee.md#select
+[`schedule`]: #schedule
+[`batch`]: #batch
+[`ioc`]: #ioc
+[`Process.spawn`]: #spawn
+[`Process::block`]: #block
+[`Process::proceed`]: #proceed
+[`Process::exit`]: #exit
+[`Channel`]: channel.coffee.md
+[`Channel::detain`]: channel.coffee.md#detain
+[`Channel::dispatch`]: channel.coffee.md#dispatch
+[`Selector::next`]: selector.coffee.md#next
+[`Selector::proceedWith`]: selector.coffee.md#proceedwith

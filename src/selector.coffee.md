@@ -10,7 +10,12 @@
 
 
 
-## [Selector]()
+## Selector
+
+A **selector** is a syncronization primitive for a [`Process`][] that defines a
+collection of candidate **channel operations**, of which *exactly one* will be
+performed by the associated process as soon as any [`Operation`][]’s associated
+[`Channel`][] is ready to proceed with communication.
 
     class Selector
       { Receive, Send } = Operation
@@ -29,7 +34,7 @@ be consumed immediately and one time only.
 
 
 
-### [Constructor]()
+### Constructor
 
       constructor: ->
         @flags       = INCIPIENT
@@ -49,7 +54,7 @@ be consumed immediately and one time only.
       randomly = (a) -> a[ Math.random() * a.length | 0 ]
 
 
-#### [delegable]()
+#### delegable
 
 Wraps a non-function `label` value in a generator function that can produce a
 `delegate` generator for the selector, where `delegate` immediately returns an
@@ -66,7 +71,7 @@ object `{label, value, channel}` to the calling generator.
             done: yes
 
 
-#### [destructure]()
+#### destructure
 
 Destructures raw arguments provided in the form of `(args..., consequent?)` and
 if necessary casts `consequent` as a proper delegable generator function.
@@ -84,9 +89,9 @@ if necessary casts `consequent` as a proper delegable generator function.
           out
 
 
-#### [commit]()
+#### commit
 
-> Called once, from either `Selector::next` or `Selector::proceedWith`.
+> Called once, from either [`Selector::next`][] or [`Selector::proceedWith`][].
 
 Commits selector `s` to one of its `operation`s, and produces the generator to
 which the selector will `delegate`.
@@ -108,9 +113,9 @@ which the selector will `delegate`.
         return
 
 
-#### [clear]()
+#### clear
 
-> Called from `commit`, `Selector::receive`, `Selector::send`.
+> Called from [`commit`][], [`Selector::receive`][], [`Selector::send`][].
 
       clear = (s) ->
         do op.free for op in s.operations
@@ -118,9 +123,9 @@ which the selector will `delegate`.
         return
 
 
-#### [iterate]()
+#### iterate
 
-> Called from `Selector::next`.
+> Called from [`Selector::next`][].
 
       iterate = (s, value) ->
         iteration = s.delegate.next value
@@ -128,9 +133,9 @@ which the selector will `delegate`.
         iteration
 
 
-#### [complete]()
+#### complete
 
-> Called from `iterate`.
+> Called from [`iterate`][].
 
       complete = (s) ->
         s.flags    = COMPLETED
@@ -143,7 +148,7 @@ which the selector will `delegate`.
 ### Class functions
 
 
-#### [select]()
+#### select
 
       @select = ->
         [operations, consequent] = destructure arguments...
@@ -155,9 +160,9 @@ which the selector will `delegate`.
         s
 
 
-#### [receive]()/[send]()
+#### receive/send
 
-Allow chaining off `select`.
+Allow chaining off [`select`][].
 
 > e.g.: `yield* select.receive(ch1, ch2, ...).send([ch3, v], ...)`
 
@@ -165,7 +170,7 @@ Allow chaining off `select`.
       @select.send    = -> (new Selector).send arguments...
 
 
-#### [first]()/[last]()
+#### first/last
 
 Preset an `arbiter`.
 
@@ -177,7 +182,9 @@ Preset an `arbiter`.
 ### Methods
 
 
-#### [receive]()
+#### receive
+
+Adds a [`Receive`][] [`Operation`][] to the selector.
 
       receive: ->
         throw new Error if ~@flags & INCIPIENT
@@ -195,7 +202,9 @@ Preset an `arbiter`.
         this
 
 
-#### [send]()
+#### send
+
+Adds a [`Send`][] [`Operation`][] to the selector.
 
       send: ->
         throw new Error if ~@flags & INCIPIENT
@@ -213,13 +222,13 @@ Preset an `arbiter`.
         this
 
 
-#### [else]()
+#### else
 
 Declares a generator function as the final `alternative`, to which the
 containing `process` will immediately delegate if all previously declared
 `operations` would have otherwise caused the process to block.
 
-Freezes `this` (i.e. prohibits further additions via `receive`|`send`).
+Freezes `this` (i.e. prohibits further additions via [`receive`][]|[`send`][]).
 
       else: (alternative) ->
         throw new Error "Early" if ~@flags & INCIPIENT
@@ -229,15 +238,15 @@ Freezes `this` (i.e. prohibits further additions via `receive`|`send`).
         this
 
 
-#### [arbitrate]()
+#### arbitrate
 
 `(arbiter: Array[operation] -> operation)`
 
 Assigns an `arbiter` function to `this` selector, to be used to select one
 operation from a list of multiple operations that are immediately ready.
 
-The `arbiter` must return one `Operation` from the list of operations provided
-to it, unless an `alternative` is defined on `this` selector.
+The `arbiter` must return one [`Operation`][] from the list of operations
+provided to it, unless an `alternative` is defined on `this` selector.
 
       arbitrate: (arbiter) ->
         throw new Error "Late" if @flags & ACTIVATED or @arbiter?
@@ -245,9 +254,9 @@ to it, unless an `alternative` is defined on `this` selector.
         this
 
 
-#### [next]()
+#### next
 
-> Called from `Process/ioc`.
+> Called from [`Process/ioc`][].
 
 Iterator protocol `next`.
 
@@ -289,16 +298,38 @@ that becomes ready.
           iterate this, value
 
 
-#### [proceedWith]()
+#### proceedWith
 
-> Called from `Operation::proceed`, only after `this` selector has `block`ed
-its `process` to wait for one of its `operations` to become ready.
+> Called from [`Operation::proceed`][], only after `this` selector has
+  `block`ed its `process` to wait for one of its `operations` to become ready.
 
-Forwards the call received by the ready `operation` from `Channel::dispatch`
-through to `this` selector’s awaiting `process`.
+Forwards the call received by the ready `operation` from
+[`Channel::dispatch`][] through to `this` selector’s awaiting `process`.
 
       proceedWith: (operation, value, isFinal) ->
         commit this, operation, value # invalidates and recycles `operation`
         @flags |= ACTIVATED
         @process.value = @value # because selected operation proxies process
         @process.proceed value, isFinal
+
+
+
+
+
+[`select`]: #select
+[`receive`]: #receive
+[`send`]: #send
+[`commit`]: #commit
+[`iterate`]: #iterate
+[`Selector::receive`]: #receive
+[`Selector::send`]: #send
+[`Selector::next`]: #next
+[`Selector::proceedWith`]: #proceedwith
+[`Process`]: process.coffee.md
+[`Process/ioc`]: process.coffee.md#ioc
+[`Operation`]: operation.coffee.md
+[`Operation::proceed`]: operation.coffee.md#proceed
+[`Receive`]: operation.coffee.md#concrete-subclasses
+[`Send`]: operation.coffee.md#concrete-subclasses
+[`Channel`]: channel.coffee.md
+[`Channel::dispatch`]: channel.coffee.md#dispatch

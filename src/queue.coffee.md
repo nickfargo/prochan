@@ -6,7 +6,7 @@
 
 
 
-## [Queue]()
+## Queue
 
 A doubly-linked list of pooled `Cell`s, each of which wrap a uniformly `SIZE`d
 `array`. Operations limited to O(1) `enqueue` and `dequeue`.

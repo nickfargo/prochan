@@ -7,12 +7,12 @@
 
 
 
-## [Operation]()
+## Operation
 
-Defines a channel operation candidate for a `Selector`.
+Defines a channel operation candidate for a [`Selector`][].
 
-`Operation` itself is abstract; concrete subclasses include `Operation.Receive`
-and `Operation.Send`.
+`Operation` itself is abstract; concrete subclasses include [`Receive`][] and
+[`Send`][].
 
     class Operation extends Awaiter
 
@@ -34,20 +34,20 @@ function to which control will be delegated if `this` operation is selected.
 ### Methods
 
 
-#### [proceed]()
+#### proceed
 
-> Called from `Channel::dispatch`.
+> Called from [`Channel::dispatch`][].
 
-Forwards to `selector`, which will cause the associated `process` to `proceed`
+Forwards to `selector`, which will cause its associated `process` to `proceed`
 delegated to `this.consequent` generator.
 
       proceed: (value, isFinal) ->
         @selector.proceedWith this, value, isFinal
 
 
-#### [free]()
+#### free
 
-Called by `Selector/clear` to immediately garbage-collect its operations.
+Called by [`Selector/clear`][] to immediately garbage-collect its operations.
 
       free: -> @channel.cancel this
 
@@ -64,3 +64,13 @@ Called by `Selector/clear` to immediately garbage-collect its operations.
         type: 'send'
         isReady: -> @channel.canProcessSend()
         detain:  -> @channel.detain this, @value
+
+
+
+
+
+[`Selector`]: selector.coffee.md
+[`Selector/clear`]: selector.coffee.md#clear
+[`Channel::dispatch`]: channel.coffee.md#dispatch
+[`Receive`]: #concrete-subclasses
+[`Send`]: #concrete-subclasses

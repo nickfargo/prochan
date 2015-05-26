@@ -3,27 +3,26 @@
 
 
 
-## [Awaiter]()
+## Awaiter
 
 An abstract **awaiter** is a participant in synchronized communications via
 **channels**. An awaiter is, or is an indirection to, a **logical process**.
-
 As such, a concrete `Awaiter` is either:
 
-- an actual **[`Process`][]**
+- an actual [`Process`][]
 
-- a **[`Callback`][]** object, which wraps a function in an awaiter interface,
-  as used by the operations **[`send.async`][]** and **[`receive.async`][]**.
+- a [`Callback`][] object, which wraps a function in an awaiter interface, as
+  used by the operations [`send.async`][] and [`receive.async`][].
 
-- an **[`Operation`][]** candidate, declared as part of a **[`select`][]**
-  expression, that defines a potential channel operation to be performed on
-  behalf of a specific [`Process`][]
+- an [`Operation`][] candidate, declared as part of a [`select`][] expression,
+  that defines a potential channel operation to be performed on behalf of a
+  specific [`Process`][]
 
-Awaiters communicate exclusively by [`send`][]ing or [`receive`][]ing data over
-a **[`Channel`][]**. A channel may synchronize communications between awaiters,
-if necessary, by **[`detain`][]**ing an awaiter until the channel can perform
-the communication, at which time the channel will **[`dispatch`][]** the
-detained awaiter, allowing it to `proceed`.
+Awaiters communicate exclusively by `send`ing or `receive`ing data over a
+[`Channel`][]. A channel may synchronize communications between awaiters, if
+necessary, by [`detain`][]ing an awaiter until the channel can perform the
+communication, at which time the channel will [`dispatch`][] the detained
+awaiter, allowing it to `proceed`.
 
     class Awaiter
 
@@ -31,6 +30,9 @@ detained awaiter, allowing it to `proceed`.
 ### Constructor
 
       constructor: ->
+
+Reference to the detaining [`Channel`][] on which an awaiter is blocked.
+
         @awaitee = null
 
 Doubly-linked list references that implement a [`Channel`][]’s **await queue**.

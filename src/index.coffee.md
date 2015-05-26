@@ -16,9 +16,9 @@ functions.
 
 
 
-### [proc]()
+### proc
 
-> (`generator`: {Function | Iterator}, `args?`: Array) → **[`Process`][]**
+> (`generator`: {Function | Iterator}, `args?`: Array) → [`Process`][]
 
 Spawns a new `Process` whose `parent` is the **current process**, and schedules
 it into the global **run queue**.
@@ -26,11 +26,12 @@ it into the global **run queue**.
     proc = (generator, args) -> Process.spawn arguments...
 
 
-#### [proc.async]()
+#### proc.async
 
 > (`generator`: Function) → (`...args`) → void
 
-Translates a `proc`-able `generator` function into a Node-style async function.
+Translates a [`proc`][]-able `generator` function into a Node-style async
+function.
 
 The returned function takes the arguments provided to `generator` and appends a
 `callback` with the conventional `(error, ...args)` signature.
@@ -50,11 +51,10 @@ The returned function takes the arguments provided to `generator` and appends a
             catch error then @callback error
             @return output
 
-The returned function includes a blank parameter (`_`) to satisfy consumers
-that respond to callbacks differently based on their parameter count.
-
-> e.g.: Mocha will run a test asynchronously if its containing function bears a
-  parameter (nominally “`done`”), but otherwise runs the test synchronously.
+> The returned function includes a blank parameter (`_`) to satisfy consumers
+that respond to callbacks differently based on their parameter count. E.g.:
+Mocha only runs a test asynchronously if its containing function bears a
+parameter (nominally “`done`”), and otherwise runs the test synchronously.
 
       async = (generator) -> (_) ->
         g = (args..., callback) -> new AsyncGenerator generator, args, callback
@@ -64,9 +64,10 @@ that respond to callbacks differently based on their parameter count.
 
 #### I/O delegates
 
-Functions mounted onto `proc` that delegate to the I/O channels of the current
-process. This allows the `proc` binding itself to act as a proxied reference to
-the current process from within the process’s own generator function.
+These are functions mounted onto [`proc`][] that delegate to the I/O channels
+of the current process. This allows the `proc` binding itself to act as a
+proxied reference to the I/O aspects of the current process, from within the
+process’s own generator function.
 
     do ->
       f = (name) -> -> Process.current()[name] arguments...
@@ -86,13 +87,13 @@ processes hierarchically.
 
 
 
-### [go]()
+### go
 
-> (`generator`: Function | Iterator, `args?`: Array) → **[`Outlet`][]**
+> (`generator`: Function | Iterator, `args?`: Array) → [`Outlet`][]
 
-Like `proc`, spawns a `Process`, but returns its I/O **channel outlet**. The
-final value `receive`d from the channel outlet will be the return value of the
-spawned process.
+Like [`proc`][] spawns a [`Process`][], but returns its I/O **channel outlet**.
+The final value [`receive`][]d from the channel outlet will be the return value
+of the spawned process.
 
     go = ->
       p = Process.spawn arguments...
@@ -100,9 +101,9 @@ spawned process.
 
 
 
-### [chan]()
+### chan
 
-> (`buffer?`: Number, `transducer?`: Function) → **[`Channel`][]**
+> (`buffer?`: Number, `transducer?`: Function) → [`Channel`][]
 
 Creates a `Channel` with optional buffering and input transformation.
 
@@ -110,26 +111,27 @@ Creates a `Channel` with optional buffering and input transformation.
       ch = new Channel buffer, transducer
 
 
-#### [chan.fixed](), [chan.sliding](), [chan.dropping]()
+#### chan.fixed, chan.sliding, chan.dropping
 
-> (`buffer?`: Number, `transducer?`: Function) → **[`Channel`][]**
+> (`buffer?`: Number, `transducer?`: Function) → [`Channel`][]
 
-Creates a `Channel` with one of the built-in **[`Buffer`][]** types.
+Creates a `Channel` with one of the built-in [`Buffer`][] types.
 
     for name in ['fixed', 'sliding', 'dropping']
       fn = Buffer[name]
       chan[name] = do (fn) -> (size, rest...) -> chan (fn size), rest...
 
 
-#### [chan.single]()
-
-Returns a `Channel` that will immediately `close` with the first value sent.
-
-Acts as a *promise*, in that, if a value has not yet been sent, then processes
-that `receive` from the channel will block, and once a value has been sent,
-processes will thenceforth immediately `receive` that value from the channel.
+#### chan.single
 
 > Alias: `chan.promise`
+
+Returns a [`Channel`][] that will immediately `close` with the first value
+sent to it.
+
+Acts as a *promise*, in that, if a value has not yet been sent, then processes
+that [`receive`][] from the channel will block, and once a value has been sent,
+processes will thenceforth immediately `receive` that value from the channel.
 
     chan.single = (transducer) ->
       ch = chan null, transducer
@@ -142,15 +144,17 @@ processes will thenceforth immediately `receive` that value from the channel.
       ch
 
 
-#### [chan.isFinal]()
+#### chan.isFinal
 
     chan.isFinal = -> Process.current().isFinal
 
 
 
-### [receive]()
+### receive
 
-> (`channel?`: {Channel | Process}) → any
+> Aliases: `take`, `get`
+
+> (`channel?`: {[`Channel`][] | [`Process`][]}) → any
 
 Starts a **receive** channel operation on the **current process**.
 
@@ -164,8 +168,6 @@ If `channel` is another `Process`, the operation will receive from the **out**
 I/O channel of that process. If no `channel` is specified, the operation will
 receive from the **in** I/O channel of the current process.
 
-> Aliases: `take`, `get`
-
     receive = ->
       p = Process.current()
       switch arguments.length
@@ -175,9 +177,9 @@ receive from the **in** I/O channel of the current process.
       channel.dequeue p
 
 
-#### [receive.async]()
+#### receive.async
 
-**[`Callback`][]** version of `receive`. Does not need to be called from within
+[`Callback`][] version of [`receive`][]. Does not need to be called from within
 a process.
 
 > `fn`: (`value`, `channel`, `done`) → void
@@ -191,9 +193,11 @@ a process.
       return
 
 
-### [send]()
+### send
 
-> (`channel?`: {Channel | Process}, `value`: any) → boolean
+> Alias: `put`
+
+> (`channel?`: {[`Channel`][] | [`Process`][]}, `value`: any) → boolean
 
 Starts a **send** channel operation on the **current process**.
 
@@ -207,8 +211,6 @@ If `channel` is another `Process`, the operation will send to the **in** I/O
 channel of that process. If no `channel` is specified, the operation will send
 to the **out** I/O channel of the current process.
 
-> Alias: `put`
-
     send = ->
       p = Process.current()
       switch arguments.length
@@ -218,9 +220,9 @@ to the **out** I/O channel of the current process.
       channel.enqueue p, value
 
 
-#### [send.async]()
+#### send.async
 
-**[`Callback`][]** version of `send`. Does not need to be called from within a
+[`Callback`][] version of [`send`][]. Does not need to be called from within a
 process.
 
 > `fn`: (`value`, `channel`, `closed`) → void
@@ -235,17 +237,20 @@ process.
 
 
 
-### [select]()
+### select
 
-Creates a **[`Selector`][]**, which reifies a **select expression**.
+> Alias: `alts`
+
+Creates a [`Selector`][], which reifies a **select expression**.
 
     {select} = Selector
 
 
 
-### [poll]()
+### poll
 
-Performs a `receive` channel operation iff one can be completed immediately.
+Performs a [`receive.async`][] channel operation only if one can be
+completed immediately.
 
     poll = ->
       switch arguments.length
@@ -256,9 +261,10 @@ Performs a `receive` channel operation iff one can be completed immediately.
 
 
 
-### [offer]()
+### offer
 
-Performs a `send` channel operation iff one can be completed immediately.
+Performs a [`send.async`][] channel operation only if one can be
+completed immediately.
 
     offer = ->
       switch arguments.length
@@ -269,9 +275,10 @@ Performs a `send` channel operation iff one can be completed immediately.
 
 
 
-### [timeout]()
+### timeout
 
-Returns a channel that closes after a certain number of `ms` (milliseconds).
+Returns a [`Channel`][] that will be closed after a certain number of `ms`
+(milliseconds).
 
     timeout = (ms, fn, args...) ->
       ch = chan()
@@ -281,9 +288,9 @@ Returns a channel that closes after a certain number of `ms` (milliseconds).
 
 
 
-### [sleep]()
+### sleep
 
-Wraps a `timeout` channel in a `receive` operation.
+Wraps a `timeout` channel in a [`receive`][] operation.
 
 > `yield sleep(1)`
 
@@ -291,7 +298,7 @@ Wraps a `timeout` channel in a `receive` operation.
 
 
 
-### [mult]()
+### mult
 
     mult = (channel) -> new Multicast channel
 
@@ -328,10 +335,17 @@ Wraps a `timeout` channel in a `receive` operation.
 
 
 
-[`Process`]:   process.coffee.md
-[`Channel`]:   channel.coffee.md
-[`Buffer`]:    buffer.coffee.md
-[`Callback`]:  callback.coffee.md
-[`Selector`]:  selector.coffee.md
-[`Inlet`]:     channel.coffee.md#inlet-outlet
-[`Outlet`]:    channel.coffee.md#inlet-outlet
+[`proc`]: #proc
+[`chan`]: #chan
+[`receive`]: #receive
+[`receive.async`]: #receiveasync
+[`send`]: #send
+[`send.async`]: #sendasync
+
+[`Process`]: process.coffee.md
+[`Channel`]: channel.coffee.md
+[`Buffer`]: buffer.coffee.md
+[`Callback`]: callback.coffee.md
+[`Selector`]: selector.coffee.md
+[`Inlet`]: channel.coffee.md#inlet-outlet
+[`Outlet`]: channel.coffee.md#inlet-outlet

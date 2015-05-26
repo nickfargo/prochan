@@ -5,14 +5,14 @@
       {hasOwnProperty:has} = Object::
 
 
-#### [isArray]()
+#### isArray
 
       isArray: Array.isArray ? (a) -> a? and typeof a is 'object' and
                                              typeof a.splice is 'function' and
                                              typeof a.length is number
 
 
-#### [alias]()
+#### alias
 
       alias: (map, objects...) ->
         for o in objects
@@ -22,7 +22,7 @@
         return
 
 
-#### [pooled]()
+#### pooled
 
 Class decorator.
 
@@ -55,7 +55,7 @@ values for all instance properties.
         constructor
 
 
-#### [attenuate]()
+#### attenuate
 
 Takes a list of `methodNames` and returns an `Attenuator` class whose instances
 proxy a hidden `client` with a corresponding subset of the `client`’s methods.
@@ -84,7 +84,7 @@ var ia = new ImmutableArray([1,2,3]);
             @::[name] = -> @['@@attenuator'] name, arguments
 
 
-#### [AbstractGenerator]()
+#### AbstractGenerator
 
 Extend this to manually write a generator constructor.
 
