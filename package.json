@@ -1,12 +1,20 @@
 {
   "name": "prochan",
   "version": "0.1.0",
-  "description": "CSP",
+  "description": "CSP: process I/O via channels",
   "keywords": [
     "csp",
     "processes",
     "channels",
-    "generators"
+    "generators",
+    "yield",
+    "concurrency",
+    "coroutines",
+    "goroutines",
+    "go",
+    "clojure",
+    "core.async",
+    "async"
   ],
   "author": "Nick Fargo",
   "repository": {
