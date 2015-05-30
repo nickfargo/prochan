@@ -27,8 +27,9 @@ Explores in particular the treatment of processes as first-class I/O primitives,
     - `select` (`alts`)
 - Support for affixing functional transforms to channels via Clojure-style **transducers**
 - Structural simplifications and optimizations for **performance**, particularly at scale
-  - Constant-time arbitrary valued buffering queues, with no amortized linear copying
-  - Space-efficient doubly-linked-list internal queues, with immediate splicing, no deferred GC
+  - Zero allocations per channel operation
+  - True constant-time arbitrary-value buffering queues, with no amortized-linear copying
+  - Space-efficient doubly-linked-list internal queues, with immediate splicing, no invalidation checks, no deferred GC
   - Pooled instances of internal classes
 - Clear, approachable [**annotated source code**](https://github.com/nickfargo/prochan/tree/master/src/index.coffee.md)
 
@@ -152,24 +153,26 @@ proc( function* () {
 
 #### Process I/O
 
-A process in **prochan** may communicate over its own built-in I/O channels.
+In **prochan** a process may communicate over its own built-in I/O channels.
 
 ```js
 proc( function* () {
   let p1 = proc( function* () {
+    // (1)
     let value = yield receive();
     yield send( value + 1 );
   });
+  // (2)
   send.async( p1, 42 );
   43 === yield receive( p1 );
 });
 ```
 
-Internally, a 0-ary `receive` call implies communication over the **in** channel of the current process (`p1`), and likewise a 1-ary `send` call implies communication over the **out** channel of the current process.
+1. Inside the current process (`p1`), a 0-ary `receive` call implies communication over the process’s **in** channel, and likewise a 1-ary `send` call implies communication over the process’s **out** channel.
 
-Externally, because `Process` implements the standard channel interface, the process `p1` may be passed as an argument to a channel operation, just like a proper channel.
+2. Outside the current process, the process `p1` may be directly passed as an argument to a channel operation, just as if it were a proper channel. When data is *sent* to the process, it is redirected through the process’s **in** channel; and likewise when data is *received* from the process, it is drawn from the process’s **out** channel.
 
-By default processes are constructed without I/O channels; an unbuffered channel is instated automatically on the first call to each end of the process.
+By default processes are constructed without I/O channels; an unbuffered channel is instated automatically as needed at either end the first time a channel operation sends to or receives from the process.
 
 
 #### Channel values and results

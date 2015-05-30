@@ -12,10 +12,12 @@
 
 ## Selector
 
-A **selector** is a syncronization primitive for a [`Process`][] that defines a
-collection of candidate **channel operations**, of which *exactly one* will be
-performed by the associated process as soon as any [`Operation`][]’s associated
-[`Channel`][] is ready to proceed with communication.
+A **selector** reifies a **select expression** inside a [`Process`][].
+
+A selector defines a collection of candidate **channel operations**, of which
+*exactly one* will be performed by the associated process immediately as soon
+as any [`Operation`][]’s associated [`Channel`][] is ready to proceed with
+communication.
 
     class Selector
       { Receive, Send } = Operation
@@ -27,8 +29,10 @@ performed by the associated process as soon as any [`Operation`][]’s associate
       IMMEDIATE = 0x10
 
 
-A `Selector` instance is a generator, delegated inline (`yield* select...`), to
-be consumed immediately and one time only.
+A `Selector` is itself a generator, to be delegated (`yield* select...`) and
+consumed immediately, one time only. In this way it acts as an indirection to a
+`delegate` generator, the identity of which will be determined by the selection
+of one of the operations.
 
       @::[Symbol?.iterator or '@@iterator'] = -> this
 
