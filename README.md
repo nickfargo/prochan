@@ -60,14 +60,8 @@ Explores in particular the treatment of processes as first-class I/O primitives,
 All sample code that follows will presume bindings to these functions imported from **prochan**:
 
 ```js
-import {proc, chan, receive, send, select} = 'prochan';
+import {proc, chan, receive, send, select} from 'prochan';
 ```
-
-> These functions are also aliased to names that reflect each operation’s general relation to a corresponding operation defined by **core.async**:
-
-> ```js
-  import {go, chan, take, put, alts} = 'prochan';
-  ```
 
 
 ### Basic operations
