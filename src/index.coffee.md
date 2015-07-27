@@ -147,14 +147,22 @@ processes will thenceforth immediately `receive` that value from the channel.
 
 ### final
 
-Predicate that reports, after a `send` channel operation, whether the channel
-is now **closed**, or after a `receive` operation, whether the channel is now
-**done** (i.e. both closed and *empty*).
+> () → boolean
 
-Arguments are ignored. Idiomatically useful in iterative expressions such as:
-`while (!final(value = yield receive(ch))) {...}`
+Predicate typically used immediately after a `receive` channel operation, to
+report whether that channel is now **done**, i.e. both *closed* and *empty*.
 
-    final = (_) -> Process.current().isFinal
+When used after a `send` operation, returns the negation of the boolean result
+of `yield send`.
+
+Arguments are always ignored.
+
+> Idiomatically useful for expressions that iterate over a series of `receive`
+> operations, e.g.:
+
+> `while ( !final( value = yield receive( channel ) ) ) {...}`
+
+    final = -> Process.current().isFinal
 
 
 
