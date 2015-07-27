@@ -305,6 +305,8 @@ Wraps a `timeout` channel in a [`receive`][] operation.
 
 ### Aliases and exports
 
+Apply a map of aliases to one or more objects.
+
     alias
       single: 'promise'
       chan
