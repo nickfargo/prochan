@@ -261,6 +261,12 @@ send.async( ch3, 'qux' );
 
 #### Transduction
 
+To support Clojure-style [**transducers**](http://clojure.org/tranducers), a channel implementation must accommodate any possible **expansion steps** in the transducer stack. For this the channel must be outfitted with an **expandable buffer**, to which a series of values produced by a single expansion step of the transducer may be added, possibly beyond the nominal length of the buffer, and which must be drained back down to below the buffer’s nominal length before more inputs are accepted.
+
+In **prochan**, tranducers may be attached to unbuffered channels as well, ostensibly, by outfitting the channel with a provisional **zero-length buffer**, which only accepts a series of values from a transducer’s expansion step as input, all of which must be drained completely before more inputs are accepted.
+
+In this way the transduced, “unbuffered” channel may perform the buffering necessary for transduction, while outwardly retaining the synchronization characteristics of an unbuffered channel.
+
 ```js
 import {compose, map, filter, mapcat} from 'transducers.js';
 
@@ -268,7 +274,7 @@ let ch1 = chan();
 let ch2 = chan( compose( map(f), filter(p), mapcat(g) ) );
 ```
 
-Here both `ch1` and `ch2` are unbuffered channels. To exhibit unbuffered synchronization behavior and also support transduction, `ch2` includes a provisional **zero-length buffer**, to which items may be added during a single expansion step of the transducer, and which must be emptied completely before the next input is accepted.
+Here both `ch1` and `ch2` exhibit the behavior of unbuffered channels — even though `ch2`, due to its attached transducer, may buffer any series of multiple values produced by the transducer’s expanding `mapcat` step.
 
 
 
