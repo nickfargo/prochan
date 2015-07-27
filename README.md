@@ -261,7 +261,7 @@ send.async( ch3, 'qux' );
 
 #### Transduction
 
-To support Clojure-style [**transducers**](http://clojure.org/tranducers), a channel implementation must accommodate any possible **expansion steps** in the transducer stack. For this the channel must be outfitted with an **expandable buffer**, to which a series of values produced by a single expansion step of the transducer may be added, possibly beyond the nominal length of the buffer, and which must be drained back down to below the buffer’s nominal length before more inputs are accepted.
+To support Clojure-style [**transducers**](http://clojure.org/transducers), a channel implementation must accommodate any possible **expansion steps** in the transducer stack. For this the channel must be outfitted with an **expandable buffer**, to which a series of values produced by a single expansion step of the transducer may be added, possibly beyond the nominal length of the buffer, and which must be drained back down to below the buffer’s nominal length before more inputs are accepted.
 
 In **prochan**, tranducers may be attached to unbuffered channels as well, ostensibly, by outfitting the channel with a provisional **zero-length buffer**, which only accepts a series of values from a transducer’s expansion step as input, all of which must be drained completely before more inputs are accepted.
 
