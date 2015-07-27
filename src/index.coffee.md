@@ -144,9 +144,17 @@ processes will thenceforth immediately `receive` that value from the channel.
       ch
 
 
-#### chan.isFinal
 
-    chan.isFinal = -> Process.current().isFinal
+### final
+
+Predicate that reports, after a `send` channel operation, whether the channel
+is now **closed**, or after a `receive` operation, whether the channel is now
+**done** (i.e. both closed and *empty*).
+
+Arguments are ignored. Idiomatically useful in iterative expressions such as:
+`while (!final(value = yield receive(ch))) {...}`
+
+    final = (_) -> Process.current().isFinal
 
 
 
@@ -318,7 +326,7 @@ Apply a map of aliases to one or more objects.
 
       select
       module.exports = {
-        proc, chan, go
+        proc, chan, go, final
         receive, send, select, poll, offer
         timeout, sleep
         mult

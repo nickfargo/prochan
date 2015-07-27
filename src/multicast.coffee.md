@@ -1,4 +1,4 @@
-    {proc, chan, receive, send} = require './'
+    {proc, chan, receive, send, final} = require './'
     {pooled, AbstractGenerator} = require './helpers'
 
 
@@ -29,8 +29,7 @@
             when 1
               return @yield receive @mult.source
             when 2
-              value = input
-              if chan.isFinal()
+              if final value = input
                 for id, relay of @mult.relays
                   relay.channel.close value if relay.shouldClose
                   do relay.free

@@ -1,6 +1,6 @@
     {assert, expect} = require 'chai'
 
-    {proc, chan, send, receive, sleep} = require 'prochan'
+    {proc, chan, send, receive, final, sleep} = require 'prochan'
     {async} = proc
 
 
@@ -34,8 +34,7 @@
 
         assert.equal 'foo', yield receive proc ->
           loop
-            value = yield receive p; done = chan.isFinal()
-            if done
+            if final value = yield receive p
               return value
             else if --sanity < 0
               throw new Error "Insanity"
