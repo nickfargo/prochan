@@ -60,7 +60,7 @@ Explores in particular the treatment of processes as first-class I/O primitives,
 All sample code that follows will presume bindings to these functions imported from **prochan**:
 
 ```js
-import {proc, chan, receive, send, select} from 'prochan';
+import {proc, chan, receive, send, final, select} from 'prochan';
 ```
 
 
@@ -171,35 +171,28 @@ By default processes are constructed without I/O channels; an unbuffered channel
 
 #### Channel values and results
 
-In **prochan** channels impose no domain restrictions on input values; any value may be conveyed over the channel unless otherwise specified by the user. In particular, channels do not appropriate `null` or `undefined`, nor introduce any other sentinel identity; no such entity is prohibited from being conveyed as its own instrinsic value through the channel.
+In **prochan** channels impose no domain restrictions on input values.
 
-A `Channel` may also be **closed** with an optional final **result value**. This is generally analogous to the return value of a function: by default a channel’s result value is `undefined`, but may be set specifically to any value provided in the call to the channel’s idempotent [`close`](https://github.com/nickfargo/prochan/blob/master/src/channel.coffee.md#close) method. Once a channel is both *closed* and *empty* it becomes **done**, after which any process that `receive`s from the channel will have the result value conveyed immediately to it.
+In particular, channels do not force appropriation of `null` or `undefined`, nor introduce any other unique sentinel identity. All entities may be conveyed through the channel as their own instrinsic value.
 
-This design leaves channel domain semantics entirely to the discretion of process authors, who may establish between themselves, if necessary, the meanings of any special entities (e.g., whether or not some particular value `receive`d from a channel — such as `null` or `undefined`, perhaps — is indeed meant to be interpreted as a special in-band “done” signal).
+A channel may be **closed** with an optional final **result value**. This is generally analogous to the return value of a function: by default a channel’s result value is `undefined`, but may be set specifically to any value provided in the call to the channel’s idempotent [`close`](https://github.com/nickfargo/prochan/blob/master/src/channel.coffee.md#close) method. Once a channel is both *closed* and *empty* it becomes **done**, after which any process that `receive`s from the channel will have the fixed result value conveyed immediately to it.
 
-However, with respect to such signaling, it is also safe, sufficient, and generally preferable for the current process to determine a channel’s “done” state out-of-band, by calling the `chan.isFinal` predicate immediately after `yield receive`ing from the channel.
+> This design leaves channel domain semantics entirely to the discretion of process authors, who may establish between themselves any special entities (e.g., whether or not some particular value `receive`d from a channel — such as `null` or `undefined` — is indeed meant to be interpreted as a special in-band “done” signal).
+
+Idiomatic *done*-signaling is performed out-of-band by enclosing a channel operation expression in a call to the `final` predicate.
+
 
 ```js
 // Process whose sole responsibility is to read from a channel
 proc( function* () {
-  while (true) {
-    let value = yield receive(ch), done = chan.isFinal();
-    if (done) {
-      return value;
-    } else {
-      // do some loopy stuff ...
-    }
+  let value;
+  while (!final(value = yield receive(ch))) {
+    // ... consume `value`s until `ch` is done ...
   }
+  // Optionally, pass along the final result value received from `ch`.
+  return value;
 });
 ```
-
-> TODO: reduce this pattern to a single operation (say, `next`) that returns a destructurable object in a manner idiomatically similar to that of JS’s own [[IteratorResult]], e.g.:
-  ```js
-  import {next} from 'prochan';
-  while {
-    let {value, done} = yield next(ch);
-  }
-  ```
 
 
 #### Delegated selection
