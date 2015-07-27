@@ -168,13 +168,12 @@ If `channel` is another `Process`, the operation will receive from the **out**
 I/O channel of that process. If no `channel` is specified, the operation will
 receive from the **in** I/O channel of the current process.
 
-    receive = ->
-      p = Process.current()
-      switch arguments.length
-        when 0 then channel = p._in()
-        when 1 then [channel] = arguments
-        else throw new Error "Arity"
-      channel.dequeue p
+    receive = -> switch arguments.length
+      when 0 then receive.$0 arguments...
+      when 1 then receive.$1 arguments...
+      else throw new Error "Arity"
+    receive.$0 = -> p = Process.current(); p._in().dequeue p
+    receive.$1 = (channel) -> channel.dequeue Process.current()
 
 
 #### receive.async
@@ -211,13 +210,12 @@ If `channel` is another `Process`, the operation will send to the **in** I/O
 channel of that process. If no `channel` is specified, the operation will send
 to the **out** I/O channel of the current process.
 
-    send = ->
-      p = Process.current()
-      switch arguments.length
-        when 1 then [value] = arguments; channel = p._out()
-        when 2 then [channel, value] = arguments
-        else throw new Error "Arity"
-      channel.enqueue p, value
+    send = -> switch arguments.length
+      when 1 then send.$1 arguments...
+      when 2 then send.$2 arguments...
+      else throw new Error "Arity"
+    send.$1 = (value) -> p = Process.current(); p._out().enqueue p, value
+    send.$2 = (channel, value) -> channel.enqueue Process.current(), value
 
 
 #### send.async
