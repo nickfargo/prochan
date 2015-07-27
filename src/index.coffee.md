@@ -147,17 +147,16 @@ processes will thenceforth immediately `receive` that value from the channel.
 
 > (…) → boolean
 
-Predicate typically used immediately after a `yield receive(...)` channel
-operation, to report whether that channel is now **done**, i.e. both *closed*
-and *empty*.
-
-When used after a `yield send(...)` operation, returns the negation of the
-yielded boolean value.
+Predicate typically called immediately after a `yield receive(...)` channel
+operation to report whether that channel is now **done**, i.e. both *closed*
+and *empty*. When called after a `yield send(...)` channel operation, returns
+the negation of the yielded boolean value, i.e., whether the channel is now
+**closed**.
 
 Arguments are always ignored.
 
-Idiomatically useful for expressions that iterate over a series of `receive`
-operations, e.g.:
+Idiomatic usage includes calling `final` with a channel operation and assigment
+as its (ignored) argument expression, e.g.:
 
 > `while ( !final( value = yield receive( channel ) ) ) {...}`
 
