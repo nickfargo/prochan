@@ -11,8 +11,6 @@ functions.
 
     {alias, AbstractGenerator} = require './helpers'
 
-    {slice} = Array::
-
 
 
 
