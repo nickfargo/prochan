@@ -84,19 +84,22 @@ var ia = new ImmutableArray([1,2,3]);
             @::[name] = -> @['@@attenuator'] name, arguments
 
 
-#### AbstractGenerator
+#### Generator
 
-Extend this to manually write a generator constructor.
+Extend this to manually write a generator constructor. Iteration state is
+stored in `_step`. State machinery goes in the overridden `next` method. Any
+vars local to the corresponding generator function, which would be stack-copied
+between continuations, should be added as instance properties (`this.*`) to the
+overridden constructor.
 
-      AbstractGenerator: class AbstractGenerator
+      Generator: class Generator
         constructor: ->
           @_result = value: undefined, done: no
           @_step = 0
-          # add stack-copy vars here
+        next: ->
         yield: (value) ->
           @_result.value = value
           @_result
-        next: -> do @return # override this
         return: (value) ->
           @_result.done = yes
           @yield value

@@ -9,7 +9,7 @@ functions.
     Selector  = require './selector'
     Callback  = require './callback'
 
-    {alias, AbstractGenerator} = require './helpers'
+    {alias, Generator} = require './helpers'
 
 
 
@@ -36,10 +36,8 @@ The returned function takes the arguments provided to `generator` and appends a
 
     proc.async = do ->
 
-      class AsyncGenerator extends AbstractGenerator
-
-        constructor: (g,a,c) ->
-          super; @generator = g; @args = a; @callback = c
+      class Async extends Generator
+        constructor: (@generator, @args, @callback) -> super
 
         next: (input) -> switch ++@_step
           when 1
@@ -55,7 +53,7 @@ Mocha only runs a test asynchronously if its containing function bears a
 parameter (nominally “`done`”), and otherwise runs the test synchronously.
 
       async = (generator) -> (_) ->
-        g = (args..., callback) -> new AsyncGenerator generator, args, callback
+        g = (args..., callback) -> new Async generator, args, callback
         proc g, arguments
         return
 
@@ -153,10 +151,8 @@ and *empty*. When called after a `yield send(...)` channel operation, returns
 the negation of the yielded boolean value, i.e., whether the channel is now
 **closed**.
 
-Arguments are always ignored.
-
-Idiomatic usage includes calling `final` with a channel operation and assigment
-as its (ignored) argument expression, e.g.:
+Idiomatic usage may include calling `final` with a channel operation and
+assigment as its (ignored) argument expression, e.g.:
 
 > `while ( !final( value = yield receive( channel ) ) ) {...}`
 

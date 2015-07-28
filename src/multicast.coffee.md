@@ -1,5 +1,5 @@
     {proc, chan, receive, send, final} = require './'
-    {pooled, AbstractGenerator} = require './helpers'
+    {pooled, Generator} = require './helpers'
 
 
 
@@ -19,10 +19,8 @@
         proc new MulticastGenerator this
 
 
-      class MulticastGenerator extends AbstractGenerator
-        constructor: (mult) ->
-          super
-          @mult = mult
+      class MulticastGenerator extends Generator
+        constructor: (@mult) -> super
 
         next: (input) -> loop
           switch ++@_step
