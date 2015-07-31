@@ -78,5 +78,5 @@ for a [`send`][] operation this tells whether the channel is **closed**; for a
 [`select`]: selector.coffee.md#select
 [`send`]: index.coffee.md#send
 [`receive`]: index.coffee.md#receive
-[`detain`]: channel.coffe.md#detain
-[`dispatch`]: channel.coffe.md#dispatch
+[`detain`]: channel.coffee.md#detain
+[`dispatch`]: channel.coffee.md#dispatch
