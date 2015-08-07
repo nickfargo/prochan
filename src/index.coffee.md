@@ -74,12 +74,18 @@ process’s own generator function.
       return
 
 
-#### proc.dump
+#### proc.list
 
-Reports process state of all live processes. Calling `proc.dump('tree')` lists
-processes hierarchically.
+Reports process state of all live processes.
 
-    proc.dump = Process.dump
+    proc.list = Process.list
+
+
+#### proc.tree
+
+Hierarchically reports live processes.
+
+    proc.tree = Process.tree
 
 
 

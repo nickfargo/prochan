@@ -187,13 +187,14 @@ either `yield`s to a blocking channel operation or `return`s.
         throw new Error message
 
 
-#### dump
+#### list
 
-      @dump = (style = 'list') -> switch style
-        when 'list'
-          (p.toString() for id, p of table).join('\n')
-        when 'tree'
-          (p.toTree() for id, p of table when p.parent is null).join('')
+      @list = -> (p.toString() for id, p of table).join '\n'
+
+
+#### tree
+
+      @tree = -> (p.toTree() for id, p of table when not p.parent?).join ''
 
 
 
