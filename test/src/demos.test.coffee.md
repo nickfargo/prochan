@@ -7,7 +7,7 @@
 
     describe "Demos:", ->
 
-      it "go ping-pong", async ->
+      it "does go ping-pong", async ->
         table = chan()
 
         Ball = -> @hits = 0
@@ -27,14 +27,13 @@
         assert.equal ball, yield receive table  # take ball off the table
 
 
-      it "can do race-free `done` detection", async ->
-        sanity = 12
-
-        p = proc -> yield send i for i in [1..10]; 'foo'
-
-        assert.equal 'foo', yield receive proc ->
-          loop
-            if final value = yield receive p
-              return value
-            else if --sanity < 0
-              throw new Error "Insanity"
+      it "detects `done` without racing or sentinels", async ->
+        sanity = 10
+        producer = proc ->
+          yield send i for i in [1..10]
+          'foo'
+        consumers = for i in [1..3] then proc ->
+          until final value = yield receive producer
+            if sanity-- is 0 then throw new Error "Insanity"
+          value
+        for c in consumers then assert.equal 'foo', yield receive c

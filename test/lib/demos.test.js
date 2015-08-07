@@ -9,7 +9,7 @@
   async = proc.async;
 
   describe("Demos:", function() {
-    it("go ping-pong", async(function*() {
+    it("does go ping-pong", async(function*() {
       var Ball, ball, player, table;
       table = chan();
       Ball = function() {
@@ -32,26 +32,38 @@
       (yield sleep(20));
       return assert.equal(ball, (yield receive(table)));
     }));
-    return it("can do race-free `done` detection", async(function*() {
-      var p, sanity;
-      sanity = 12;
-      p = proc(function*() {
+    return it("detects `done` without racing or sentinels", async(function*() {
+      var c, consumers, i, j, len, producer, results, sanity;
+      sanity = 10;
+      producer = proc(function*() {
         var i, j;
         for (i = j = 1; j <= 10; i = ++j) {
           (yield send(i));
         }
         return 'foo';
       });
-      return assert.equal('foo', (yield receive(proc(function*() {
-        var value;
-        while (true) {
-          if (final(value = (yield receive(p)))) {
+      consumers = (function() {
+        var j, results;
+        results = [];
+        for (i = j = 1; j <= 3; i = ++j) {
+          results.push(proc(function*() {
+            var value;
+            while (!final(value = (yield receive(producer)))) {
+              if (sanity-- === 0) {
+                throw new Error("Insanity");
+              }
+            }
             return value;
-          } else if (--sanity < 0) {
-            throw new Error("Insanity");
-          }
+          }));
         }
-      }))));
+        return results;
+      })();
+      results = [];
+      for (j = 0, len = consumers.length; j < len; j++) {
+        c = consumers[j];
+        results.push(assert.equal('foo', (yield receive(c))));
+      }
+      return results;
     }));
   });
 
