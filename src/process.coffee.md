@@ -343,6 +343,14 @@ Terminates the process and propagates termination to all child processes.
         }
         """
 
+      toJSON: -> JSON.stringify
+        type     : "Process"
+        id       : @id
+        state    : @flagsToString()
+        parent   : @parent?.id ? null
+        children : (id for id of @children)
+        IO       : [@cin?.id ? null, @cout?.id ? null]
+
       toTree: (indent = 0) ->
         s =  "#{'  '.repeat indent}#{@id} #{@flagsToString()}"
         s += " #{@awaitee.direction()}#{@awaitee.id}" if @awaitee?
