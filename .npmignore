@@ -1,6 +1,7 @@
 bench/
 bin/
 bundles/
+heaps/
 src/
 test/
 *.coffee.md
