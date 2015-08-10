@@ -32,6 +32,43 @@
       (yield sleep(20));
       return assert.equal(ball, (yield receive(table)));
     }));
+    it("sieves the primes", async(function*() {
+      var filtering, n, numbers, primes, sieve, yielded;
+      numbers = function*(start) {
+        var n;
+        n = start;
+        while (true) {
+          (yield send(n++));
+        }
+      };
+      filtering = function*(input, prime) {
+        var n;
+        while (true) {
+          n = (yield receive(input));
+          if (n % prime) {
+            (yield send(n));
+          }
+        }
+      };
+      sieve = function*() {
+        var prime, source;
+        source = proc(numbers(2));
+        while (true) {
+          (yield send(prime = (yield receive(source))));
+          source = proc(filtering(source, prime));
+        }
+      };
+      primes = proc(sieve);
+      yielded = ((yield* (function*() {
+        var results;
+        results = [];
+        while (!(50 < (n = (yield receive(primes))))) {
+          results.push(n);
+        }
+        return results;
+      })()));
+      return assert.deepEqual(yielded, [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]);
+    }));
     return it("detects `done` without racing or sentinels", async(function*() {
       var c, consumers, i, j, len, producer, results, sanity;
       sanity = 10;
@@ -50,7 +87,7 @@
             var value;
             while (!final(value = (yield receive(producer)))) {
               if (sanity-- === 0) {
-                throw new Error("Insanity");
+                throw new Error("Huge mistake");
               }
             }
             return value;

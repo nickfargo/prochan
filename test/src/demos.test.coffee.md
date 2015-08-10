@@ -7,6 +7,9 @@
 
     describe "Demos:", ->
 
+
+#### Ping pong
+
       it "does go ping-pong", async ->
         table = chan()
 
@@ -27,6 +30,46 @@
         assert.equal ball, yield receive table  # take ball off the table
 
 
+#### Prime sieve
+
+A process chain begins with a `source` process that outputs the numbers > 1.
+For each `prime` number received from `source`, a new `filtering` process is
+added to the end of the chain, and this becomes the new `source`.
+
+      it "sieves the primes", async ->
+
+        numbers = (start) ->
+          n = start; loop then yield send n++
+          return
+
+        filtering = (input, prime) ->
+          loop
+            n = yield receive input
+            yield send n if n % prime
+          return
+
+        sieve = ->
+          source = proc numbers 2
+          loop
+            yield send prime = yield receive source
+            source = proc filtering source, prime
+          return
+
+        primes = proc sieve
+        yielded = (n until 50 < n = yield receive primes)
+        assert.deepEqual yielded, [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47]
+
+
+#### The `final` countdown
+
+Using `final` to safely detect whether a `receive` operation takes place on a
+channel that is **done**.
+
+Even though `final(x)` appears to be an expression of applying `final` to `x`,
+in fact it is just a syntactical convenience, as `final` is concerned only with
+the timing of the side effect of evaluating `x`; i.e. `final(x)` is equivalent
+to `(x, final())`. *It’s not a trick, it’s an illusion.*
+
       it "detects `done` without racing or sentinels", async ->
         sanity = 10
         producer = proc ->
@@ -34,6 +77,6 @@
           'foo'
         consumers = for i in [1..3] then proc ->
           until final value = yield receive producer
-            if sanity-- is 0 then throw new Error "Insanity"
+            if sanity-- is 0 then throw new Error "Huge mistake"
           value
         for c in consumers then assert.equal 'foo', yield receive c
