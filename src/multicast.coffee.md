@@ -22,24 +22,23 @@
       class MulticastGenerator extends Generator
         constructor: (@mult) -> super
 
-        next: (input) -> loop
-          switch ++@_step
-            when 1
-              return @yield receive @mult.source
-            when 2
-              if final value = input
-                for id, relay of @mult.relays
-                  relay.channel.close value if relay.shouldClose
-                  do relay.free
-                do @mult.reset
-                return @return()
-              else
-                @mult.remaining = @mult.size
-                for id, {channel} of @mult.relays
-                  send.async channel, value, @mult.deliver
-                @_step = 0
-                if @mult.size > 0
-                  return @yield receive @mult.completed
+        next: (value) -> loop then switch ++@_step
+          when 1
+            return @yield receive @mult.source
+          when 2
+            if final()
+              for id, relay of @mult.relays
+                relay.channel.close value if relay.shouldClose
+                do relay.free
+              do @mult.reset
+              return @return()
+            else
+              @mult.remaining = @mult.size
+              for id, {channel} of @mult.relays
+                send.async channel, value, @mult.deliver
+              @_step = 0
+              if @mult.size > 0
+                return @yield receive @mult.completed
 
 
       pooled class Relay
