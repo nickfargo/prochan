@@ -32,10 +32,13 @@
 
 #### Prime sieve
 
-A `sieve` builds a chain of processes, beginning with a `source` process that
-outputs the numbers > 1. For each `prime` number received from `source`, a new
+A `sieve` yields the sequence of prime numbers by building a process chain,
+starting with a `source` process that outputs the sequence of all numbers > 1.
+As each `prime` number is received from `source` and piped to output, a
 `filtering` process that removes multiples of that `prime` is added to the end
-of the chain, and this process becomes the new `source`.
+of the chain, and this process becomes the new `source`. Thus, by passing the
+number sequence through this growing series of filters, `sieve` will always
+yield the next prime number.
 
       it "sieves the primes", async ->
 
