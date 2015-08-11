@@ -60,27 +60,34 @@ by `source` will always yield the next prime number.
           return
 
         primes = proc sieve
-        yielded = (n until 50 < n = yield receive primes)
-        assert.deepEqual yielded, [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47]
+        for n in [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47]
+          assert.equal n, yield receive primes
+        return
 
 
 #### The `final` countdown
 
-This test uses the `final` function to safely detect whether a `receive`
-operation takes place on a channel that is **done**.
+This test has multiple competing consumers use the `final` function to safely
+detect whether a `receive` operation takes place on a channel that is **done**.
 
-Even though `final(x)` appears to apply `final` to `x`, in fact this is just a
-syntactical ~~trick~~ illusion, as `final` is concerned only with the timing of
-its evaluation relative to that of `x`. Thus the expressions `final(x)` and
-`(x, final())` are equivalent in both value and effect.
+Even though the form `final(x)` used here appears to apply `final` to `x`, in
+fact this is just a convenient syntactical ~~trick~~ illusion: `final` actually
+ignores its arguments, and is concerned only with the timing of its evaluation
+relative to that of `x`. Thus the expressions `final(x)` and `(x, final())` are
+equivalent, in both value and effect.
 
       it "detects `done` without racing or sentinels", async ->
         sanity = 10
+
         producer = proc ->
           yield send i for i in [1..10]
           'foo'
+
         consumers = for i in [1..3] then proc ->
           until final value = yield receive producer
             if sanity-- is 0 then throw new Error "Huge mistake"
           value
-        for c in consumers then assert.equal 'foo', yield receive c
+
+        for c in consumers
+          assert.equal 'foo', yield receive c
+        return

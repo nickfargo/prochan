@@ -33,7 +33,7 @@
       return assert.equal(ball, (yield receive(table)));
     }));
     it("sieves the primes", async(function*() {
-      var filtering, n, numbers, primes, sieve, yielded;
+      var filtering, j, len, n, numbers, primes, ref2, sieve;
       numbers = function*(start) {
         var n;
         n = start;
@@ -59,18 +59,14 @@
         }
       };
       primes = proc(sieve);
-      yielded = ((yield* (function*() {
-        var results;
-        results = [];
-        while (!(50 < (n = (yield receive(primes))))) {
-          results.push(n);
-        }
-        return results;
-      })()));
-      return assert.deepEqual(yielded, [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]);
+      ref2 = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
+      for (j = 0, len = ref2.length; j < len; j++) {
+        n = ref2[j];
+        assert.equal(n, (yield receive(primes)));
+      }
     }));
     return it("detects `done` without racing or sentinels", async(function*() {
-      var c, consumers, i, j, len, producer, results, sanity;
+      var c, consumers, i, j, len, producer, sanity;
       sanity = 10;
       producer = proc(function*() {
         var i, j;
@@ -95,12 +91,10 @@
         }
         return results;
       })();
-      results = [];
       for (j = 0, len = consumers.length; j < len; j++) {
         c = consumers[j];
-        results.push(assert.equal('foo', (yield receive(c))));
+        assert.equal('foo', (yield receive(c)));
       }
-      return results;
     }));
   });
 
