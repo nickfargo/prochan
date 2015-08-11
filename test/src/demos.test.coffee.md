@@ -66,10 +66,10 @@ of the chain, and this process becomes the new `source`.
 This test uses the `final` function to safely detect whether a `receive`
 operation takes place on a channel that is **done**.
 
-Even though `final(x)` appears to be an expression of applying `final` to `x`,
-in fact this is just a syntactical ~~trick~~ illusion, as `final` is concerned
-only with the timing of the side effect of evaluating `x`; i.e. the expressions
-`final(x)` and `(x, final())` are equivalent in both value and effect.
+Even though `final(x)` appears to apply `final` to `x`, in fact this is just a
+syntactical ~~trick~~ illusion, as `final` is concerned only with the timing of
+its evaluation relative to that of `x`. Thus the expressions `final(x)` and
+`(x, final())` are equivalent in both value and effect.
 
       it "detects `done` without racing or sentinels", async ->
         sanity = 10
