@@ -32,9 +32,10 @@
 
 #### Prime sieve
 
-A process chain begins with a `source` process that outputs the numbers > 1.
-For each `prime` number received from `source`, a new `filtering` process is
-added to the end of the chain, and this becomes the new `source`.
+A `sieve` builds a chain of processes, beginning with a `source` process that
+outputs the numbers > 1. For each `prime` number received from `source`, a new
+`filtering` process that removes multiples of that `prime` is added to the end
+of the chain, and this process becomes the new `source`.
 
       it "sieves the primes", async ->
 
@@ -62,13 +63,13 @@ added to the end of the chain, and this becomes the new `source`.
 
 #### The `final` countdown
 
-Using `final` to safely detect whether a `receive` operation takes place on a
-channel that is **done**.
+This test uses the `final` function to safely detect whether a `receive`
+operation takes place on a channel that is **done**.
 
 Even though `final(x)` appears to be an expression of applying `final` to `x`,
-in fact it is just a syntactical convenience, as `final` is concerned only with
-the timing of the side effect of evaluating `x`; i.e. `final(x)` is equivalent
-to `(x, final())`. *It’s not a trick, it’s an illusion.*
+in fact this is just a syntactical ~~trick~~ illusion, as `final` is concerned
+only with the timing of the side effect of evaluating `x`; i.e. the expressions
+`final(x)` and `(x, final())` are equivalent in both value and effect.
 
       it "detects `done` without racing or sentinels", async ->
         sanity = 10
