@@ -37,8 +37,8 @@ starting with a `source` process that outputs the sequence of all numbers > 1.
 As each `prime` number is received from `source` and piped to output, a
 `filtering` process that removes multiples of that `prime` is added to the end
 of the chain, and this process becomes the new `source`. Thus, by passing the
-number sequence through this growing series of filters, `sieve` will always
-yield the next prime number.
+number sequence through this growing series of filters, the process referenced
+by `source` will always yield the next prime number.
 
       it "sieves the primes", async ->
 
