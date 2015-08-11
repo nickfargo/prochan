@@ -67,8 +67,8 @@ by `source` will always yield the next prime number.
 
 #### The `final` countdown
 
-This test has multiple competing consumers use the `final` function to safely
-detect whether a `receive` operation takes place on a channel that is **done**.
+Multiple competing consumers use the `final` function to safely detect whether
+a `receive` operation takes place on a channel that is **done**.
 
 Even though the form `final(x)` used here appears to apply `final` to `x`, in
 fact this is just a convenient syntactical ~~trick~~ illusion: `final` actually
