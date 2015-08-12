@@ -71,7 +71,7 @@ object `{label, value, channel}` to the calling generator.
         then label
         else (value, channel) ->
           next: ->
-            value: {label, value, channel} # TODO: avoid allocation
+            value: {label, value, channel}
             done: yes
 
 
@@ -80,19 +80,15 @@ object `{label, value, channel}` to the calling generator.
 Destructures raw arguments provided in the form of `(args..., consequent?)` and
 if necessary casts `consequent` as a proper delegable generator function.
 
-      destructure = do ->
-        out = []
-        destructure = (args..., consequent) ->
-          switch typeof consequent
-            when 'function' then ;
-            when 'string'
-              consequent = delegable consequent
-            else
-              args.push consequent
-              consequent = delegable()
-          out[0] = args
-          out[1] = consequent
-          out
+      destructure = (args..., consequent) ->
+        switch typeof consequent
+          when 'function' then ;
+          when 'string'
+            consequent = delegable consequent
+          else
+            args.push consequent
+            consequent = delegable()
+        [args, consequent]
 
 
 #### commit
@@ -298,7 +294,7 @@ that becomes ready.
           else
             @process.block this
             do op.detain for op in @operations
-            value: undefined, done: no # TODO: cache result object
+            value: undefined, done: no
 
         else
           iterate this, value
