@@ -82,12 +82,14 @@ if necessary casts `consequent` as a proper delegable generator function.
 
       destructure = do ->
         out = []
-        destructure = (args...) ->
-          if args.length
-            switch typeof last = args.pop()
-              when 'function' then consequent = last
-              when 'string'   then consequent = delegable last
-              else args.push last; consequent = delegable()
+        destructure = (args..., consequent) ->
+          switch typeof consequent
+            when 'function' then ;
+            when 'string'
+              consequent = delegable consequent
+            else
+              args.push consequent
+              consequent = delegable()
           out[0] = args
           out[1] = consequent
           out
