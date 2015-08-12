@@ -91,61 +91,6 @@ if necessary casts `consequent` as a proper delegable generator function.
         [args, consequent]
 
 
-#### commit
-
-> Called once, from either [`Selector::next`][] or [`Selector::proceedWith`][].
-
-Commits selector `s` to one of its `operation`s, and produces the generator to
-which the selector will `delegate`.
-
-      commit = (s, operation, value) ->
-        throw new Error "Already committed" if s.flags & COMMITTED
-        s.flags |= COMMITTED
-
-        if operation?
-          throw new Error "Foreign operation" if operation.selector isnt s
-          s.value    = operation.value
-          s.delegate = operation.consequent value, operation.channel
-        else
-          s.delegate = s.alternative()
-
-        clear s
-        s.alternative = null
-        s.arbiter = null
-        return
-
-
-#### clear
-
-> Called from [`commit`][], [`Selector::receive`][], [`Selector::send`][].
-
-      clear = (s) ->
-        do op.free for op in s.operations
-        s.operations.length = 0
-        return
-
-
-#### iterate
-
-> Called from [`Selector::next`][].
-
-      iterate = (s, value) ->
-        iteration = s.delegate.next value
-        complete s if iteration.done
-        iteration
-
-
-#### complete
-
-> Called from [`iterate`][].
-
-      complete = (s) ->
-        s.flags    = COMPLETED
-        s.process  = null
-        s.delegate = null
-        s.value    = undefined
-
-
 
 ### Class functions
 
@@ -199,7 +144,7 @@ Adds a [`Receive`][] [`Operation`][] to the selector.
           else
             if ready
               @flags |= IMMEDIATE
-              clear this
+              do @clear
             @operations.push Receive.alloc this, consequent, channel
         this
 
@@ -219,7 +164,7 @@ Adds a [`Send`][] [`Operation`][] to the selector.
           else
             if ready
               @flags |= IMMEDIATE
-              clear this
+              do @clear
             @operations.push Send.alloc this, consequent, channel, value
         this
 
@@ -286,18 +231,18 @@ that becomes ready.
           if op?
             if op.type is 'send' # TODO: suck less
               value = not op.channel.isClosed()
-            commit this, op, value
-            iterate this, value
+            @commit op, value
+            @iterate value
           else if @alternative
-            commit this
-            iterate this
+            do @commit
+            @iterate()
           else
             @process.block this
             do op.detain for op in @operations
             value: undefined, done: no
 
         else
-          iterate this, value
+          @iterate value
 
 
 #### proceedWith
@@ -309,10 +254,65 @@ Forwards the call received by the ready `operation` from
 [`Channel::dispatch`][] through to `this` selector’s awaiting `process`.
 
       proceedWith: (operation, value, isFinal) ->
-        commit this, operation, value # invalidates and recycles `operation`
+        @commit operation, value # invalidates and recycles `operation`
         @flags |= ACTIVATED
         @process.value = @value # because selected operation proxies process
         @process.proceed value, isFinal
+
+
+#### commit
+
+> Called once, from either [`Selector::next`][] or [`Selector::proceedWith`][].
+
+Commits `this` selector to one of its `operation`s, and produces the generator
+to which the selector will `delegate`.
+
+      commit: (operation, value) ->
+        throw new Error "Already committed" if @flags & COMMITTED
+        @flags |= COMMITTED
+
+        if operation?
+          throw new Error "Foreign operation" if operation.selector isnt this
+          @value    = operation.value
+          @delegate = operation.consequent value, operation.channel
+        else
+          @delegate = @alternative()
+
+        do @clear
+        @alternative = null
+        @arbiter = null
+        return
+
+
+#### iterate
+
+> Called from [`Selector::next`][].
+
+      iterate: (value) ->
+        result = @delegate.next value
+        do @complete if result.done
+        result
+
+
+#### clear
+
+> Called from [`Selector::commit`][], [`Selector::receive`][],
+  [`Selector::send`][].
+
+      clear: ->
+        do op.free while op = @operations.pop()
+        return
+
+
+#### complete
+
+> Called from [`Selector::iterate`][].
+
+      complete: ->
+        @flags    = COMPLETED
+        @process  = null
+        @delegate = null
+        @value    = undefined
 
 
 
@@ -321,12 +321,12 @@ Forwards the call received by the ready `operation` from
 [`select`]: #select
 [`receive`]: #receive
 [`send`]: #send
-[`commit`]: #commit
-[`iterate`]: #iterate
 [`Selector::receive`]: #receive
 [`Selector::send`]: #send
 [`Selector::next`]: #next
 [`Selector::proceedWith`]: #proceedwith
+[`Selector::commit`]: #commit
+[`Selector::iterate`]: #iterate
 [`Process`]: process.coffee.md
 [`Process/ioc`]: process.coffee.md#ioc
 [`Operation`]: operation.coffee.md
