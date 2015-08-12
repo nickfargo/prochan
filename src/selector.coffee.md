@@ -195,7 +195,7 @@ Adds a [`Receive`][] [`Operation`][] to the selector.
       receive: ->
         throw new Error if ~@flags & INCIPIENT
         [channels, consequent] = destructure arguments...
-        for channel in channels
+        for channel in channels when channel?
           ready = channel.canProcessReceive()
           if @flags & IMMEDIATE
             if ready
@@ -215,7 +215,7 @@ Adds a [`Send`][] [`Operation`][] to the selector.
       send: ->
         throw new Error if ~@flags & INCIPIENT
         [pairs, consequent] = destructure arguments...
-        for [channel, value] in pairs
+        for [channel, value] in pairs when channel?
           ready = channel.canProcessSend()
           if @flags & IMMEDIATE
             if ready

@@ -261,6 +261,39 @@
         }))));
       }));
     });
+    describe("Null channels:", function() {
+      it("discards null/undefined receive ops", async(function*() {
+        var ch1, ch2, ch3, p1, p2;
+        ch1 = chan();
+        ch2 = chan();
+        ch3 = chan();
+        p1 = proc(function*() {
+          var channel, ref1, value;
+          ref1 = (yield* select(ch1, null, ch2, null, ch3)), value = ref1.value, channel = ref1.channel;
+          assert.equal(value, 42);
+          return assert.equal(channel, ch3);
+        });
+        p2 = proc(function*() {
+          return (yield send(ch3, 42));
+        });
+        return (yield receive(p1));
+      }));
+      return it("discards null/undefined send ops", async(function*() {
+        var ch1, ch2, p1, p2;
+        ch1 = chan();
+        ch2 = chan();
+        p1 = proc(function*() {
+          var channel, ref1, value;
+          ref1 = (yield* select.send([ch1, 42], [null, 1337], [ch2, 'foo'], [null, 'bar'])), value = ref1.value, channel = ref1.channel;
+          assert.equal(value, true);
+          return assert.equal(channel, ch2);
+        });
+        p2 = proc(function*() {
+          return (yield receive(ch2));
+        });
+        return (yield receive(p1));
+      }));
+    });
     return describe("Cancellation:", function() {
       return it("frees unselected operations after commit", async(function*() {
         var ch1, ch2, ch3, p0, p1, p2, p3;

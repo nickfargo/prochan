@@ -252,6 +252,35 @@
 
 
 
+      describe "Null channels:", ->
+
+        it "discards null/undefined receive ops", async ->
+          ch1 = chan()
+          ch2 = chan()
+          ch3 = chan()
+
+          p1 = proc ->
+            {value, channel} = yield from select ch1, null, ch2, null, ch3
+            assert.equal value, 42
+            assert.equal channel, ch3
+          p2 = proc -> yield send ch3, 42
+          yield receive p1
+
+
+        it "discards null/undefined send ops", async ->
+          ch1 = chan()
+          ch2 = chan()
+
+          p1 = proc ->
+            {value, channel} = yield from select
+              .send [ch1, 42], [null, 1337], [ch2, 'foo'], [null, 'bar']
+            assert.equal value, yes
+            assert.equal channel, ch2
+          p2 = proc -> yield receive ch2
+          yield receive p1
+
+
+
       describe "Cancellation:", ->
 
         it "frees unselected operations after commit", async ->
