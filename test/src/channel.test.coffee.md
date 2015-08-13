@@ -232,3 +232,21 @@ A `send` to a channel that either is already closed or will close before the sen
           pp = for i in [1..3]
             proc -> assert.equal 3, yield receive ch
           yield receive proc -> yield send ch, 1337
+
+        it "keeps its promises", async ->
+          ch = chan.promise()
+          p1 = proc ->
+            value = yield receive ch
+            assert.equal value, 42
+            yield send waiter, 'p1'
+          p2 = proc ->
+            value = yield receive ch
+            assert.equal value, 42
+            yield send waiter, 'p2'
+          waiter = proc ->
+            n = 2
+            yield receive() while n--
+          sleeper = proc ->
+            yield sleep 1
+            yield send ch, 42
+          assert.deepEqual (yield receive waiter), ['p1', 'p2']

@@ -304,7 +304,7 @@
           return (yield send(ch, 42));
         })));
       }));
-      return it("delivers with transduction", async(function*() {
+      it("delivers with transduction", async(function*() {
         var ch, char, gtTwo, i, pp, string, toInt;
         string = function(n) {
           return n.toString();
@@ -333,6 +333,36 @@
         return (yield receive(proc(function*() {
           return (yield send(ch, 1337));
         })));
+      }));
+      return it("keeps its promises", async(function*() {
+        var ch, p1, p2, sleeper, waiter;
+        ch = chan.promise();
+        p1 = proc(function*() {
+          var value;
+          value = (yield receive(ch));
+          assert.equal(value, 42);
+          return (yield send(waiter, 'p1'));
+        });
+        p2 = proc(function*() {
+          var value;
+          value = (yield receive(ch));
+          assert.equal(value, 42);
+          return (yield send(waiter, 'p2'));
+        });
+        waiter = proc(function*() {
+          var n, results;
+          n = 2;
+          results = [];
+          while (n--) {
+            results.push((yield receive()));
+          }
+          return results;
+        });
+        sleeper = proc(function*() {
+          (yield sleep(1));
+          return (yield send(ch, 42));
+        });
+        return assert.deepEqual((yield receive(waiter)), ['p1', 'p2']);
       }));
     });
   });
