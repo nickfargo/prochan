@@ -140,19 +140,50 @@ A `send` to a channel that either is already closed or will close before the sen
           yield sleep 1
           assert.equal 42, asyncValue
 
+
+      describe "polling:", ->
+        # TODO: replace `undefined` poll result with `ch.EMPTY` sentinel?
+
         it "polls", ->
           ch = chan()
-          assert.equal undefined, poll ch # TODO: ch.EMPTY
-          p1 = proc -> assert.equal yes, yield send ch, 42
-          p2 = proc -> assert.equal 42, poll ch; yield return
-          yield receive p2
+          send.async ch, 42
+          assert.equal (poll ch), 42
 
-        it "offers", async ->
+        it "fails if channel is EMPTY", ->
+          ch = chan 2
+          assert ch.buffer.isEmpty()
+          assert.equal (poll ch), undefined
+
+        it "fails if channel is PULLED", ->
           ch = chan()
-          assert.equal no, offer ch, 42
-          p1 = proc -> assert.equal 1337, yield receive ch
-          p2 = proc -> assert.equal yes, offer ch, 1337; yield return
-          yield receive p2
+          receive.async ch
+          assert.equal (poll ch), undefined
+
+
+      describe "offering:", ->
+
+        it "offers", ->
+          ch = chan()
+          receive.async ch
+          assert.equal (offer ch, 42), yes
+
+        it "fails if channel is FULL", ->
+          ch = chan 2
+          send.async ch, 42
+          send.async ch, 43
+          assert ch.buffer.isFull()
+          assert.equal (offer ch, 44), no
+
+        it "fails if channel is PUSHED", ->
+          ch = chan()
+          send.async ch, 42
+          assert.equal (offer ch, 42), no
+
+        it "fails if channel is CLOSED", ->
+          ch = chan()
+          receive.async ch
+          do ch.close
+          assert.equal (offer ch, 42), no
 
 
       describe "Transduction:", ->

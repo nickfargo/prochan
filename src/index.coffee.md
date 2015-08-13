@@ -205,7 +205,7 @@ a process.
       immediate = channel.canProcessReceive()
       result    = channel.dequeue callback
       if done or immediate then callback.proceed result, done
-      return
+      result
 
 
 ### send
@@ -247,7 +247,7 @@ process.
       immediate = channel.canProcessSend()
       result    = channel.enqueue callback, value
       if closed or immediate then callback.proceed result, closed
-      not closed
+      result
 
 
 

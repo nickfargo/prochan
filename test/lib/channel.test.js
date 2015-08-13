@@ -177,7 +177,7 @@
         assert.equal(42, (yield receive(ch)));
         return assert.equal(true, asyncValue);
       }));
-      it("receives from a pushed channel (6 14)", async(function*() {
+      return it("receives from a pushed channel (6 14)", async(function*() {
         var asyncValue, ch, p1;
         ch = chan();
         p1 = proc(function*() {
@@ -192,32 +192,55 @@
         (yield sleep(1));
         return assert.equal(42, asyncValue);
       }));
-      it("polls", function*() {
-        var ch, p1, p2;
+    });
+    describe("polling:", function() {
+      it("polls", function() {
+        var ch;
         ch = chan();
-        assert.equal(void 0, poll(ch));
-        p1 = proc(function*() {
-          return assert.equal(true, (yield send(ch, 42)));
-        });
-        p2 = proc(function*() {
-          assert.equal(42, poll(ch));
-          return;
-        });
-        return (yield receive(p2));
+        send.async(ch, 42);
+        return assert.equal(poll(ch), 42);
       });
-      return it("offers", async(function*() {
-        var ch, p1, p2;
+      it("fails if channel is EMPTY", function() {
+        var ch;
+        ch = chan(2);
+        assert(ch.buffer.isEmpty());
+        return assert.equal(poll(ch), void 0);
+      });
+      return it("fails if channel is PULLED", function() {
+        var ch;
         ch = chan();
-        assert.equal(false, offer(ch, 42));
-        p1 = proc(function*() {
-          return assert.equal(1337, (yield receive(ch)));
-        });
-        p2 = proc(function*() {
-          assert.equal(true, offer(ch, 1337));
-          return;
-        });
-        return (yield receive(p2));
-      }));
+        receive.async(ch);
+        return assert.equal(poll(ch), void 0);
+      });
+    });
+    describe("offering:", function() {
+      it("offers", function() {
+        var ch;
+        ch = chan();
+        receive.async(ch);
+        return assert.equal(offer(ch, 42), true);
+      });
+      it("fails if channel is FULL", function() {
+        var ch;
+        ch = chan(2);
+        send.async(ch, 42);
+        send.async(ch, 43);
+        assert(ch.buffer.isFull());
+        return assert.equal(offer(ch, 44), false);
+      });
+      it("fails if channel is PUSHED", function() {
+        var ch;
+        ch = chan();
+        send.async(ch, 42);
+        return assert.equal(offer(ch, 42), false);
+      });
+      return it("fails if channel is CLOSED", function() {
+        var ch;
+        ch = chan();
+        receive.async(ch);
+        ch.close();
+        return assert.equal(offer(ch, 42), false);
+      });
     });
     describe("Transduction:", function() {
       return it("transforms, filters, expands, terminates", async(function*() {
