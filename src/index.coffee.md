@@ -146,6 +146,39 @@ processes will thenceforth immediately `receive` that value from the channel.
       ch
 
 
+#### chan.lift
+
+Translates a Node-style async function `fn` into an equivalent channel-based
+function.
+
+The returned function’s parameters match those of `fn`, excluding the final
+*callback*. A [`Channel`][] is returned, which will close with the value of the
+non-error argument(s) passed to the `callback` accepted by `fn`.
+
+    chan.lift = (fn, options) ->
+      {error, singular} = options if options?
+      error ?= yes; singular ?= yes
+      (args...) ->
+        ch = chan.single()
+        callback =
+          if error
+            if singular
+              (err, value) ->
+                throw err if err?
+                send.async ch, value
+            else
+              (err, values...) ->
+                throw err if err?
+                send.async ch, values
+          else
+            if singular
+              (value) -> send.async ch, value
+            else
+              (values...) -> send.async ch, values
+        fn.call this, args..., callback
+        ch
+
+
 
 ### final
 

@@ -285,7 +285,7 @@
         return assert.deepEqual([8, 6, 4, 2, 1, 6, 5, 1, 2, 1], (yield receive(p2)));
       }));
     });
-    return describe("single:", function() {
+    describe("single:", function() {
       it("delivers without transduction", async(function*() {
         var ch, i, pp;
         ch = chan.single();
@@ -363,6 +363,24 @@
           return (yield send(ch, 42));
         });
         return assert.deepEqual((yield receive(waiter)), ['p1', 'p2']);
+      }));
+    });
+    return describe("lift:", function() {
+      var fn, fs, name, ref2;
+      fs = {};
+      ref2 = require('fs');
+      for (name in ref2) {
+        fn = ref2[name];
+        if (!/_|Sync$/.test(name)) {
+          fs[name] = chan.lift(fn);
+        }
+      }
+      return it("looks like sync, runs like async", async(function*() {
+        var data, resolved, text;
+        resolved = (yield receive(fs.realpath('.')));
+        text = (yield receive(fs.readFile('package.json', 'utf8')));
+        data = JSON.parse(text);
+        return assert(resolved.endsWith(data.name));
       }));
     });
   });

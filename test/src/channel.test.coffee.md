@@ -250,3 +250,16 @@ A `send` to a channel that either is already closed or will close before the sen
             yield sleep 1
             yield send ch, 42
           assert.deepEqual (yield receive waiter), ['p1', 'p2']
+
+
+      describe "lift:", ->
+
+        fs = {}
+        for name, fn of require 'fs' when not /_|Sync$/.test name
+          fs[name] = chan.lift fn
+
+        it "looks like sync, runs like async", async ->
+          resolved = yield receive fs.realpath '.'
+          text = yield receive fs.readFile 'package.json', 'utf8'
+          data = JSON.parse text
+          assert resolved.endsWith data.name
