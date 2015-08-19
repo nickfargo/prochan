@@ -304,7 +304,8 @@ completed immediately.
         when 0 then channel = Process.current()._in()
         when 1 then [channel] = arguments
         else throw new Error "Arity"
-      if channel.canProcessReceive() then receive.async channel
+      if channel.canProcessReceive() then receive.async channel else poll.EMPTY
+    poll.EMPTY = {}
 
 
 

@@ -204,13 +204,13 @@
         var ch;
         ch = chan(2);
         assert(ch.buffer.isEmpty());
-        return assert.equal(poll(ch), void 0);
+        return assert.equal(poll(ch), poll.EMPTY);
       });
       return it("fails if channel is PULLED", function() {
         var ch;
         ch = chan();
         receive.async(ch);
-        return assert.equal(poll(ch), void 0);
+        return assert.equal(poll(ch), poll.EMPTY);
       });
     });
     describe("offering:", function() {

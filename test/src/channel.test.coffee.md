@@ -142,7 +142,6 @@ A `send` to a channel that either is already closed or will close before the sen
 
 
       describe "polling:", ->
-        # TODO: replace `undefined` poll result with `ch.EMPTY` sentinel?
 
         it "polls", ->
           ch = chan()
@@ -152,12 +151,12 @@ A `send` to a channel that either is already closed or will close before the sen
         it "fails if channel is EMPTY", ->
           ch = chan 2
           assert ch.buffer.isEmpty()
-          assert.equal (poll ch), undefined
+          assert.equal (poll ch), poll.EMPTY
 
         it "fails if channel is PULLED", ->
           ch = chan()
           receive.async ch
-          assert.equal (poll ch), undefined
+          assert.equal (poll ch), poll.EMPTY
 
 
       describe "offering:", ->
