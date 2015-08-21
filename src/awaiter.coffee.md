@@ -31,7 +31,8 @@ awaiter, allowing it to `proceed`.
 
       constructor: ->
 
-Reference to the detaining [`Channel`][] on which an awaiter is blocked.
+Reference to the detaining [`Channel`][] or [`Selector`][] on which an awaiter
+is blocked.
 
         @awaitee = null
 
@@ -71,6 +72,7 @@ for a [`send`][] operation this tells whether the channel is **closed**; for a
 
 [`Process`]: process.coffee.md
 [`Channel`]: channel.coffee.md
+[`Selector`]: selector.coffee.md
 [`Callback`]: callback.coffee.md
 [`send.async`]: index.coffee.md#sendasync
 [`receive.async`]: index.coffee.md#receiveasync
