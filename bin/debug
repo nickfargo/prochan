@@ -3,4 +3,4 @@
 coffee -o lib/ -c src/
 coffee -o test/lib/ -c test/src/
 
-mocha --harmony --colors --recursive -R dot --debug-brk
+mocha --harmony --colors --recursive -R dot --debug-brk "$@"
