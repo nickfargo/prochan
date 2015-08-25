@@ -253,7 +253,7 @@ transduction step may force early termination.
             else
               value = @dispatch yes, no
           when 24, 28
-            if @buffer? then do @buffer.free; @buffer = null
+            if @buffer? then @buffer = null
             done = yes
             value = @result
           else throw new Error "Invalid channel state"
