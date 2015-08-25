@@ -1,5 +1,5 @@
     {assert} = require 'chai'
-    {proc, chan, send, receive, poll, offer} = require 'prochan'
+    {proc, chan, send, receive, final, poll, offer} = require 'prochan'
     {async} = proc
     {comp, map, filter, mapcat, takeWhile} = require 'transducers-js'
 
@@ -36,3 +36,47 @@
 
           assert.equal yes, pc.isClosed()
           assert.equal yes, pc.isDone()
+
+
+      describe "options:", ->
+
+        it "can specify I/O channels", async ->
+          p1 = proc
+            out: chan 1
+            ->
+              assert p1.cout?.buffer?
+              assert.equal p1.cout.buffer.isEmpty(), yes
+              yield send 42
+              assert.equal p1.cout.buffer.isEmpty(), no
+              yield send 1337
+              'done'
+
+          yield receive proc ->
+            assert.equal (yield receive p1), 42
+            assert.equal p1.cout.buffer.isEmpty(), no
+            assert.equal (yield receive p1), 1337
+            assert.equal p1.cout.buffer.isEmpty(), yes
+            assert.equal (yield receive p1), 'done'
+            assert p1.isDone()
+            assert.equal (yield receive p1), 'done'
+            return
+
+        it "can use other processes directly as I/O channels", async ->
+          pin = proc ->
+            i = 0; loop then yield send ++i
+            return
+
+          pout = proc ->
+            until final value = yield receive()
+              yield send value.toString()
+
+          p = proc in: pin, out: pout, ->
+            until final value = yield receive()
+              yield send value * 2
+
+          yield receive proc ->
+            assert.equal (yield receive p), '2'
+            assert.equal (yield receive p), '4'
+            # receiving from `pout` is the same as receiving from `p`
+            assert.equal (yield receive pout), '6'
+            assert.equal (yield receive pout), '8'

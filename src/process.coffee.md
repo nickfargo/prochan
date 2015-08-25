@@ -41,6 +41,8 @@ processes pulled from the *run queue*.
 
     class Process extends Awaiter
 
+      NO_OPTIONS  = {}
+
 Process state constants.
 
       INCIPIENT   = 0x01
@@ -69,26 +71,18 @@ Top-level process variables and collections.
 
 > Called from [`Process.spawn`][].
 
-      constructor: (generator, args) ->
+      constructor: (options = NO_OPTIONS, generator) ->
         super
 
-        @id = 'p' + ++uid
+        @id        = 'p' + ++uid
+        @flags     = INCIPIENT
+        @parent    = current
+        @children  = null
+        @iterator  = generator
 
-        if @parent = current
-          (@parent.children ?= {})[@id] = this
-        @children = null
+        {in:@cin, out:@cout} = options
 
-        @flags = INCIPIENT
-
-        if typeof generator is 'function'
-          generator = generator.apply this, args
-        if typeof generator.next isnt 'function'
-          throw new Error "Invalid generator"
-        @iterator = generator
-
-        @cin  = null
-        @cout = null
-
+        if @parent then (@parent.children ?= {})[@id] = this
         table[@id] = this
 
 
@@ -158,9 +152,18 @@ either `yield`s to a blocking channel operation or `return`s.
 
 #### spawn
 
-      @spawn = (generator, args) ->
-        throw new Error "Arity" if arguments.length is 0
-        p = new Process generator, args
+      @spawn = (options, generator, args) ->
+        throw new Error "Arity" unless options?
+
+        if typeof options is 'function' or typeof options.next is 'function'
+          args = generator; generator = options; options = undefined
+
+        if typeof generator is 'function'
+          generator = generator.apply this, args ? options?.args
+        if typeof generator.next isnt 'function'
+          throw new Error "Invalid generator"
+
+        p = new Process options, generator
         do p.proceed
         p
 
@@ -315,7 +318,7 @@ Terminates the process and propagates termination to all child processes.
         else
           @value = value
 
-        @cin?.close()
+        @cin?.close?()
         @cout?.close value
 
         if @children?
