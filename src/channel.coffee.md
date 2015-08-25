@@ -169,7 +169,8 @@ operations.
             @dispatch no, yes while @head
           when 9, 13
             if @buffer?
-              @dispatch @buffer.dequeue(), no while @head
+              while not @buffer.isEmpty() and @head
+                @dispatch @buffer.dequeue(), no
             @dispatch result, yes while @head
           when 16, 20, 24, 28 then return
           else throw new Error "Invalid channel state"
