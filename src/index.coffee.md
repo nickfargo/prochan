@@ -16,12 +16,15 @@ functions.
 
 ### proc
 
-> (`generator`: {Function | Iterator}, `args?`: Array) → [`Process`][]
+> (`options?`: Object, `generator`: {Function | Iterator}, `args?`: Array) →
+  [`Process`][]
 
 Spawns a new `Process` whose `parent` is the **current process**, and schedules
-it into the global **run queue**.
+it into the global **run queue**. I/O channels may be set by `options`, keyed
+to {`in`, `out`}; required `generator` may be an iterator instance or generator
+function to which optional `args` are supplied.
 
-    proc = (generator, args) -> Process.spawn arguments...
+    proc = (options, generator, args) -> Process.spawn arguments...
 
 
 #### proc.async
