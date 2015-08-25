@@ -1,5 +1,5 @@
     {assert} = require 'chai'
-    {proc, chan, send, receive, poll, offer, sleep} = require 'prochan'
+    {proc, chan, send, receive, final, poll, offer, sleep} = require 'prochan'
     {async} = proc
     {comp, map, filter, mapcat, takeWhile} = require 'transducers-js'
 
@@ -203,10 +203,10 @@ A `send` to a channel that either is already closed or will close before the sen
                      takeWhile notZero ) # [8,6,4,2,1,6,5,1,2,1]
 
           ch = chan xf
-          p1 = proc -> i = 0; yield send ch, ++i until ch.isClosed()
-          p2 = proc -> yield receive ch until ch.isDone()
+          p1 = proc -> i = 0; continue while yield send ch, ++i
+          p2 = proc -> value until final value = yield receive ch
 
-          assert.deepEqual [8,6,4,2,1,6,5,1,2,1], yield receive p2
+          assert.deepEqual (yield receive p2), [8,6,4,2,1,6,5,1,2,1]
 
 
       describe "single:", ->
