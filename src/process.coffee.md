@@ -315,7 +315,7 @@ Terminates the process and propagates termination to all child processes.
         else
           @value = value
 
-        @cin?.close()
+        @cin?.close?()
         @cout?.close value
 
         if @children?
