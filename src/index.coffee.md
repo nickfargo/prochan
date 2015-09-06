@@ -355,6 +355,11 @@ Wraps a `timeout` channel in a [`receive`][] operation.
 
 
 
+### merge
+
+    merge = (channels, into) -> (new Merger channels, into).output
+
+
 
 ### Aliases and exports
 
@@ -374,7 +379,7 @@ Apply a map of aliases to one or more objects.
         proc, chan, go, final
         receive, send, select, poll, offer
         timeout, sleep
-        mult
+        mult, merge
       }
 
 
@@ -383,6 +388,7 @@ Apply a map of aliases to one or more objects.
 ### Forward imports
 
     Multicast = require './multicast'
+    Merger    = require './merger'
 
 
 
