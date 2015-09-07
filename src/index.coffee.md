@@ -351,13 +351,25 @@ Wraps a `timeout` channel in a [`receive`][] operation.
 
 ### mult
 
+
+
     mult = (channel) -> new Multicast channel
 
 
 
 ### merge
 
-    merge = (channels, into) -> (new Merger channels, into).output
+> (`inputs`: Array, `output?`: {[`Channel`][] | [`Process`][]}) → {`output` | [`Channel`][]}
+
+Returns the provided `output` channel, or a new unbuffered channel by default,
+whose values will be those received concurrently from each of the channels
+provided by the `inputs` array.
+
+The `output` channel will close once all `inputs` are **done**, with a final
+**result value** of an array containing the `inputs` in the order that each
+became *done*.
+
+    merge = (inputs, output) -> (new Merger inputs, output).output
 
 
 
