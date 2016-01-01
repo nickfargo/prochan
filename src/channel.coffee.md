@@ -334,7 +334,7 @@ Called from [`Operation::free`][], in turn from [`Selector/clear`][], after a
         [object Channel] {
           id:     #{@id}
           state:  #{@flagsToString()}
-          buffer: #{buffer?.queue?.length ? null}/#{buffer?.size ? null}
+          buffer: #{@buffer?.queue?.length ? null}/#{@buffer?.size ? null}
           head:   #{@head?.id ? @head?.constructor.name ? null}
           tail:   #{@tail?.id ? @tail?.constructor.name ? null}
         }
