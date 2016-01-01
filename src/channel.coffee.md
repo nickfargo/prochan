@@ -11,14 +11,20 @@
 
 ## Channel
 
-A **channel** is a *spatiotemporal queue* — responsible both for *conveying*
-data from one **logical process** to another, and for *synchronizing* the
-execution of communicating processes as necessary.
+A **channel** is a queue over space and time, responsible for both *conveying*
+values from one **logical process** to another, and also for *synchronizing*
+the execution of processes between each communication.
 
-From a channel’s perspective, logical processes generalize to **awaiters**. A
-concrete [`Awaiter`][] instance is either an actual [`Process`][], or an
-indirection to a process, such as a [`Callback`][] used in an async operation,
-or an [`Operation`][] declared by a [`select`][] expression.
+From a channel’s perspective, logical processes are abstracted as a general
+[`Awaiter`][] type, whose subtypes include: **(1)** actual [`Process`][]es,
+**(2)** the [`Callback`][] objects used by async channel operations, and
+**(3)** [`Operation`][] candidates declared inside a [`select`][] expression.
+
+Channel operations (e.g. `send`, `receive`) take an `Awaiter` as their first
+argument and, depending on channel state, may cause that `Awaiter` to become
+[`detain`][]ed in the channel’s **await queue** until the channel is ready to
+perform the operation.
+
 
     class Channel
 
@@ -76,7 +82,7 @@ were unbuffered, yet also support transduction and expansion-step overfilling.
               @buffer = buffer ? new Buffer 0, transducer
           @buffer.channel = this
 
-Essential aspects of the channel’s state are encoded as bits in `flags`.
+Essential aspects of the channel’s state are encoded by the `flags` integer.
 
         @flags = @buffer?.flags ? (EMPTY | FULL)
 
