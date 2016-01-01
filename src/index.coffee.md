@@ -24,7 +24,7 @@ it into the global **run queue**. I/O channels may be set by `options`, keyed
 to {`in`, `out`}; required `generator` may be an iterator instance or generator
 function to which optional `args` are supplied.
 
-    proc = (options, generator, args) -> Process.spawn arguments...
+    proc = Process.spawn
 
 
 #### proc.async
@@ -180,6 +180,13 @@ non-error argument(s) passed to the `callback` accepted by `fn`.
               (values...) -> send.async ch, values
         fn.call this, args..., callback
         ch
+
+
+#### chan.from
+
+Returns a buffered channel filled with the contents of the provided `array`.
+
+    chan.from = (array) -> chan Buffer.from array
 
 
 

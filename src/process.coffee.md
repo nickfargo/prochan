@@ -138,8 +138,11 @@ function either `yield`s to a blocking channel operation or `return`s.
         p.flags = RUNNING
         current = p
         try loop
-          { value, done } = p.iterator.next p.value
-          p.exit value if done
+          {value, done} = p.iterator.next p.value
+          if done then p.exit value; break
+          switch value
+            when Process.spawn
+              schedule p
           break if ~p.flags & RUNNING
         catch error
           p.kill error

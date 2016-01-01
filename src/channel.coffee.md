@@ -78,7 +78,7 @@ were unbuffered, yet also support transduction and expansion-step overfilling.
 
 Essential aspects of the channel’s state are encoded as bits in `flags`.
 
-        @flags = if @buffer?.size > 0 then EMPTY else EMPTY | FULL
+        @flags = @buffer?.flags ? (EMPTY | FULL)
 
 The **await queue** is a doubly-linked list, whose ends are `head` and `tail`,
 comprised of [`Awaiter`][]s. The *direction* of the await queue is specified by

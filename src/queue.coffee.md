@@ -15,11 +15,22 @@ A doubly-linked list of pooled `Cell`s, each of which wrap a uniformly `SIZE`d
 
       pooled class Cell
         @SIZE = 32
-        constructor: (prev) ->
+        constructor: (prev, array) ->
           @_prev = prev or null
           @_next = null
-          @array ?= new Array Cell.SIZE
+          if array?
+            @array = array
+          else
+            @array ?= new Array Cell.SIZE
           prev?._next = this
+
+      @from = (array) ->
+        q = new Queue
+        q.length = array.length
+        for i in [0..q.length] by 32 # FIXME
+          q.tail = Cell.alloc q.tail, array.slice i, i + 32
+          q.head ?= q.tail
+        q
 
       constructor: ->
         @head = null

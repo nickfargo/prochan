@@ -45,6 +45,22 @@ Expanding transduction steps may cause the buffer to become overfilled.
 
 
 
+### Static functions
+
+
+#### from
+
+Efficiently initializes a buffer with the contents of the provided `array`.
+
+      @from = (array) ->
+        b = new this
+        b.size = array.length
+        b.flags = if b.size > 0 then FULL else mask
+        b.queue = Queue.from array
+        b
+
+
+
 ### Methods
 
 
