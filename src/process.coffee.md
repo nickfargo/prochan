@@ -27,7 +27,7 @@ is situated in that channel’s **await queue**.
 
 A process that is `SCHEDULED` is situated in the process **run queue**.
 
-A **process run** corresponds to a single invocation of the [`ioc`][] function
+A **process run** corresponds to a single invocation of the [`run`][] function
 on the process that is `RUNNING`, and thus is the unique **current process**.
 The process’s `generator` function will run through any iterations that `yield`
 following a *non-blocking channel operation*, and on either to the next
@@ -43,14 +43,16 @@ processes pulled from the *run queue*.
 
       NO_OPTIONS  = {}
 
-Process state constants.
+Primitive and derived process state constants.
 
-      INCIPIENT   = 0x01
-      SCHEDULED   = 0x02
-      RUNNING     = 0x04
-      BLOCKED     = 0x08
-      TERMINATED  = 0x10
-      ERROR       = 0x20
+      ERROR       = 0x01
+      INCIPIENT   = 0x02
+      SCHEDULED   = 0x04
+      RUNNING     = 0x08
+      BLOCKED     = 0x10
+      TERMINATED  = 0x20
+      PANICKING   = ERROR | RUNNING
+      CRASHED     = ERROR | TERMINATED
 
 Absolute maximum number of *process runs* to execute before control is yielded
 back to the environment.
@@ -116,21 +118,21 @@ is capped absolutely by `BATCH_SIZE`.
       batch = ->
         n = 0
         while runqueue.length
-          ioc runqueue.dequeue()
+          run runqueue.dequeue()
           break if ++n >= BATCH_SIZE
         batchId = if runqueue.length then setImmediate batch else null
         return
 
 
-#### ioc
+#### run
 
 > Called from [`batch`][].
 
-The inversion-of-control loop performs a single **process run** on process `p`
-by stepping through its `iterator` until the associated generator function
-either `yield`s to a blocking channel operation or `return`s.
+Performs a single **process run** on process `p` by stepping through its
+`iterator` in an inversion-of-control `loop` until the associated generator
+function either `yield`s to a blocking channel operation or `return`s.
 
-      ioc = (p) ->
+      run = (p) ->
         return if p.flags & TERMINATED
         do p.throw if ~p.flags & SCHEDULED
         p.flags = RUNNING
@@ -253,7 +255,7 @@ the communication to the process’s I/O ports.
 
 > Called from [`Channel::detain`][], [`Selector::next`][].
 
-Causes [`ioc`][] to break its loop of stepping through the process `iterator`.
+Causes [`run`][] to break its loop of stepping through the process `iterator`.
 The process will resume when the blocking channel calls [`Process::proceed`][].
 
       block: ->
@@ -376,7 +378,7 @@ Terminates the process and propagates termination to all child processes.
 [`select`]: selector.coffee.md#select
 [`schedule`]: #schedule
 [`batch`]: #batch
-[`ioc`]: #ioc
+[`run`]: #run
 [`Process.spawn`]: #spawn
 [`Process::block`]: #block
 [`Process::proceed`]: #proceed
