@@ -11,14 +11,14 @@
 
 ## Channel
 
-A **channel** is a queue over space and time, responsible for both *conveying*
-values from one **logical process** to another, and also for *synchronizing*
-the execution of processes between each communication.
+A **channel** is a queue over space and time, responsible for *conveying*
+values from one **logical process** to another, and for *synchronizing* the
+execution of processes between each communication.
 
-From a channel’s perspective, logical processes are abstracted as a general
-[`Awaiter`][] type, whose subtypes include: **(1)** actual [`Process`][]es,
-**(2)** the [`Callback`][] objects used by async channel operations, and
-**(3)** [`Operation`][] candidates declared inside a [`select`][] expression.
+Logical processes are abstracted as a general [`Awaiter`][] type, whose
+subtypes include: **(1)** actual [`Process`][]es, **(2)** the [`Callback`][]
+objects used by async channel operations, and **(3)** [`Operation`][]
+candidates declared inside a [`select`][] expression.
 
 Channel operations (e.g. `send`, `receive`) take an `Awaiter` as their first
 argument and, depending on channel state, may cause that `Awaiter` to become
@@ -363,6 +363,7 @@ Called from [`Operation::free`][], in turn from [`Selector/clear`][], after a
 
 
 [`close`]: #close
+[`detain`]: #detain
 [`dispatch`]: #dispatch
 
 [`Awaiter`]: awaiter.coffee.md
