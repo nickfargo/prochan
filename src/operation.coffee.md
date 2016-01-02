@@ -1,4 +1,4 @@
-    Awaiter = require './awaiter'
+    Executor = require './executor'
     {pooled} = require './helpers'
 
 
@@ -14,7 +14,7 @@ Defines a channel operation candidate for a [`Selector`][].
 `Operation` itself is abstract; concrete subclasses include [`Receive`][] and
 [`Send`][].
 
-    class Operation extends Awaiter
+    class Operation extends Executor
 
 
 ### Constructor

@@ -1,4 +1,4 @@
-    Awaiter = require './awaiter'
+    Executor = require './executor'
     Channel = require './channel'
     Queue   = require './queue'
 
@@ -39,7 +39,7 @@ Process runs are *batched*, such that during a single turn of the environment’
 event loop, up to a certain limited number of *process runs* are performed on
 processes pulled from the *run queue*.
 
-    class Process extends Awaiter
+    class Process extends Executor
 
       NO_OPTIONS  = {}
 

@@ -3,35 +3,35 @@
 
 
 
-## Awaiter
+## Executor
 
-An abstract **awaiter** is a participant in synchronized communications via
-**channels**. An awaiter is, or is an indirection to, a **logical process**.
-As such, a concrete `Awaiter` is either:
+An abstract **executor** is a participant in synchronized communications via
+**channels**. An executor is, or is an indirection to, a **logical process**.
+As such, a concrete `Executor` is either:
 
 - an actual [`Process`][]
 
-- a [`Callback`][] object, which wraps a function in an awaiter interface, as
+- a [`Callback`][] object, which wraps a function in an executor interface, as
   used by the operations [`send.async`][] and [`receive.async`][].
 
 - an [`Operation`][] candidate, declared as part of a [`select`][] expression,
   that defines a potential channel operation to be performed on behalf of a
   specific [`Process`][]
 
-Awaiters communicate exclusively by `send`ing or `receive`ing data over a
-[`Channel`][]. A channel may synchronize communications between awaiters, if
-necessary, by [`detain`][]ing an awaiter until the channel can perform the
+Executors communicate exclusively by `send`ing or `receive`ing data over a
+[`Channel`][]. A channel may synchronize communications between executors, if
+necessary, by [`detain`][]ing an executor until the channel can perform the
 communication, at which time the channel will [`dispatch`][] the detained
-awaiter, allowing it to `proceed`.
+executor, allowing it to `proceed`.
 
-    class Awaiter
+    class Executor
 
 
 ### Constructor
 
       constructor: ->
 
-Reference to the detaining [`Channel`][] or [`Selector`][] on which an awaiter
+Reference to the detaining [`Channel`][] or [`Selector`][] on which an executor
 is blocked.
 
         @awaitee = null

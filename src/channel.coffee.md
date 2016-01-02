@@ -15,15 +15,14 @@ A **channel** is a queue over space and time, responsible for *conveying*
 values from one **logical process** to another, and for *synchronizing* the
 execution of processes between each communication.
 
-Logical processes are abstracted as a general [`Awaiter`][] type, whose
+Logical processes are abstracted as a general [`Executor`][] type, whose
 subtypes include: **(1)** actual [`Process`][]es, **(2)** the [`Callback`][]
 objects used by async channel operations, and **(3)** [`Operation`][]
-candidates declared inside a [`select`][] expression.
-
-Channel operations (e.g. `send`, `receive`) take an `Awaiter` as their first
-argument and, depending on channel state, may cause that `Awaiter` to become
-[`detain`][]ed in the channel’s **await queue** until the channel is ready to
-perform the operation.
+candidates declared inside a [`select`][] expression. Channel operations
+(e.g. `send`, `receive`) take an `Executor` as their first argument and,
+depending on channel state, may cause that `Executor` to become [`detain`][]ed
+in the channel’s **await queue** until the channel is ready to perform the
+operation.
 
 
     class Channel
@@ -45,7 +44,7 @@ dropping) can always immediately perform a `send`, and accordingly can never
 be `FULL`. An unbuffered channel is always both `EMPTY` and `FULL`.
 
 `PUSHED` and `PULLED` indicate the direction of the **await queue**, which is
-comprised of [`Awaiter`][]s that are, respectively, either all **senders** or
+comprised of [`Executor`][]s that are, respectively, either all **senders** or
 all **receivers**. At any instant, a channel may be `PUSHED` by a queue of
 senders, `PULLED` by a queue of receivers, or neither, but never both.
 
@@ -87,10 +86,10 @@ Essential aspects of the channel’s state are encoded by the `flags` integer.
         @flags = @buffer?.flags ? (EMPTY | FULL)
 
 The **await queue** is a doubly-linked list, whose ends are `head` and `tail`,
-comprised of [`Awaiter`][]s. The *direction* of the await queue is specified by
-the presence of either the `PUSHED` or `PULLED` bit in `flags`, which indicates
-whether the queued awaiters are either all **senders** or all **receivers**,
-respectively.
+comprised of [`Executor`][]s. The *direction* of the await queue is specified
+by the presence of either the `PUSHED` or `PULLED` bit in `flags`, which
+indicates whether the queued executors are either all **senders** or all
+**receivers**, respectively.
 
         @head = null
         @tail = null
@@ -187,7 +186,7 @@ operations.
 
 #### enqueue
 
-> (`sender`: Awaiter, `value`: any) → boolean
+> (`sender`: Executor, `value`: any) → boolean
 
 Executes or schedules the conveyance of a `value` from a `sender` to `this`
 channel via its **inlet**.
@@ -226,7 +225,7 @@ transduction step may force early termination.
 
 #### dequeue
 
-> (`receiver`: Awaiter) → any
+> (`receiver`: Executor) → any
 
 Executes or schedules the conveyance of a `value` from `this` channel via its
 **outlet** to a `receiver`.
@@ -269,24 +268,24 @@ transduction step may force early termination.
 
 #### detain
 
-Adds `awaiter` to the **await queue**, causing it to `block` until the channel
+Adds `executor` to the **await queue**, causing it to `block` until the channel
 is ready to communicate with it.
 
-If called with one argument then `awaiter` is a **receiver**. If called with
-two arguments then `awaiter` is a **sender** conveying a `value`.
+If called with one argument then `executor` is a **receiver**. If called with
+two arguments then `executor` is a **sender** conveying a `value`.
 
-      detain: (awaiter, value) ->
+      detain: (executor, value) ->
         @flags |= if arguments.length < 2 then PULLED else PUSHED
         @tail =
-          if awaiter._prev = @tail
-          then @tail._next = awaiter
-          else @head = awaiter
-        awaiter.block this, value
+          if executor._prev = @tail
+          then @tail._next = executor
+          else @head = executor
+        executor.block this, value
 
 
 #### dispatch
 
-Releases the `head` [`Awaiter`][] from the **await queue** and fulfills its
+Releases the `head` [`Executor`][] from the **await queue** and fulfills its
 communication request.
 
 A **receiver** will `proceed` with the `value` it was awaiting, along with a
@@ -297,13 +296,13 @@ it sent was indeed accepted into the channel, along with a boolean `isFinal`
 indicating whether the channel is now **closed**.
 
       dispatch: (value, isFinal) ->
-        awaiter = @head
-        if @head = awaiter._next
-          @head._prev = awaiter._next = null
+        executor = @head
+        if @head = executor._next
+          @head._prev = executor._next = null
         else
           @tail = null
           @flags &= ~(PUSHED | PULLED)
-        awaiter.proceed value, isFinal
+        executor.proceed value, isFinal
 
 
 #### cancel
@@ -315,7 +314,7 @@ Extracts an `operation` from the **await queue**.
 Called from [`Operation::free`][], in turn from [`Selector/clear`][], after a
 **selector** has committed to one of its operations.
 
-> Could this be generalized to `Awaiter`? Might `Callback`s also need `cancel`?
+> Could this be generalized to `Executor`? Might `Callback` also need `cancel`?
 
       cancel: (operation) ->
         {_prev, _next} = operation
@@ -366,7 +365,7 @@ Called from [`Operation::free`][], in turn from [`Selector/clear`][], after a
 [`detain`]: #detain
 [`dispatch`]: #dispatch
 
-[`Awaiter`]: awaiter.coffee.md
+[`Executor`]: executor.coffee.md
 [`Buffer`]: buffer.coffee.md
 [`Callback`]: callback.coffee.md
 [`Operation`]: operation.coffee.md

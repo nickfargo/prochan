@@ -1,6 +1,6 @@
     {pooled} = require './helpers'
 
-    Awaiter = require './awaiter'
+    Executor = require './executor'
 
 
 
@@ -10,12 +10,12 @@
 
 ## Callback
 
-Casts a callback `fn` as an [`Awaiter`][], so that it may be queued in a
+Casts a callback `fn` as an [`Executor`][], so that it may be queued in a
 [`Channel`][], and thus participate in channel communications.
 
 Used by ([`send.async`][]|[`receive.async`][]).
 
-    pooled class Callback extends Awaiter
+    pooled class Callback extends Executor
 
       constructor: (fn) ->
         super
@@ -31,7 +31,7 @@ Used by ([`send.async`][]|[`receive.async`][]).
 
 
 
-[`Awaiter`]: awaiter.coffee.md
+[`Executor`]: executor.coffee.md
 [`Channel`]: channel.coffee.md
 [`send.async`]: index.coffee.md#sendasync
 [`receive.async`]: index.coffee.md#receiveasync
