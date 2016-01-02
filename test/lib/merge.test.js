@@ -9,47 +9,51 @@
   async = proc.async;
 
   describe("Merge:", function() {
-    return it("merges", async(function*() {
-      var ch, merged, p1, p2, p3, results, values;
-      p1 = proc(function*() {
-        (yield send(1));
-        (yield send(2));
-        (yield send(3));
-        (yield send(4));
-        return 'foo';
-      });
-      p2 = proc(function*() {
-        (yield send(5));
-        (yield send(6));
-        (yield send(7));
-        return 'bar';
-      });
-      p3 = proc(function*() {
-        (yield send(8));
-        (yield send(9));
-        return 'baz';
-      });
-      merged = merge([p1, p2, p3]);
+    return it("merges values into single output channel", async(function*() {
+      var ch, inputs, merged, mergedResult, resultValues, values;
+      inputs = [
+        proc(function*() {
+          (yield send(1));
+          (yield send(2));
+          (yield send(3));
+          (yield send(4));
+          (yield send(5));
+          return 'foo';
+        }), proc(function*() {
+          (yield send(6));
+          (yield send(7));
+          (yield send(8));
+          return 'bar';
+        }), proc(function*() {
+          (yield send(9));
+          return 'baz';
+        })
+      ];
+      merged = merge(inputs);
       values = (yield receive(proc(function*() {
-        var results1, value;
-        results1 = [];
+        var results, value;
+        results = [];
         while (!final(value = (yield receive(merged)))) {
-          results1.push(value);
+          results.push(value);
         }
-        return results1;
+        return results;
       })));
-      results = (yield* (function*() {
-        var i, len, ref1, results1;
-        ref1 = (yield receive(merged));
-        results1 = [];
-        for (i = 0, len = ref1.length; i < len; i++) {
-          ch = ref1[i];
-          results1.push((yield receive(ch)));
+      assert.sameMembers(values, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      assert.notDeepEqual(values, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      mergedResult = (yield receive(merged));
+      assert.sameMembers(inputs, mergedResult);
+      assert.notDeepEqual(inputs, mergedResult);
+      resultValues = (yield* (function*() {
+        var i, len, results;
+        results = [];
+        for (i = 0, len = mergedResult.length; i < len; i++) {
+          ch = mergedResult[i];
+          results.push((yield receive(ch)));
         }
-        return results1;
+        return results;
       })());
-      assert.equal(values.length, 9);
-      return assert.equal(results.length, 3);
+      assert.sameMembers(resultValues, ['foo', 'bar', 'baz']);
+      return assert.notDeepEqual(resultValues, ['foo', 'bar', 'baz']);
     }));
   });
 

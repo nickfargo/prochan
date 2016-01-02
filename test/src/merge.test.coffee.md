@@ -6,35 +6,42 @@
 
     describe "Merge:", ->
 
-      it "merges", async ->
+      it "merges values into single output channel", async ->
 
-        p1 = proc ->
-          yield send 1
-          yield send 2
-          yield send 3
-          yield send 4
-          'foo'
+        inputs = [
+          proc ->
+            yield send 1
+            yield send 2
+            yield send 3
+            yield send 4
+            yield send 5
+            'foo'
 
-        p2 = proc ->
-          yield send 5
-          yield send 6
-          yield send 7
-          'bar'
+          proc ->
+            yield send 6
+            yield send 7
+            yield send 8
+            'bar'
 
-        p3 = proc ->
-          yield send 8
-          yield send 9
-          'baz'
+          proc ->
+            yield send 9
+            'baz'
+        ]
 
-        merged = merge [p1, p2, p3]
+        merged = merge inputs
 
         values = yield receive proc ->
           until final value = yield receive merged
             value
-        results =
-          for ch in yield receive merged
-            yield receive ch
+        assert.sameMembers   values, [1..9]
+        assert.notDeepEqual  values, [1..9]
 
-        # Order of merged output is not defined
-        assert.equal values.length, 9
-        assert.equal results.length, 3
+        mergedResult = yield receive merged
+        assert.sameMembers   inputs, mergedResult
+        assert.notDeepEqual  inputs, mergedResult
+
+        resultValues =
+          for ch in mergedResult
+            yield receive ch
+        assert.sameMembers   resultValues, ['foo', 'bar', 'baz']
+        assert.notDeepEqual  resultValues, ['foo', 'bar', 'baz']
