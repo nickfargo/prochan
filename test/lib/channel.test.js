@@ -48,9 +48,7 @@
         var ch, p1, p2;
         ch = chan();
         p1 = proc(function*() {
-          var opResult;
-          assert.equal(void 0, opResult = receive(ch));
-          return assert.equal(42, (yield opResult));
+          return assert.equal(42, (yield receive(ch)));
         });
         p2 = proc(function*() {
           return (yield send(ch, 42));
@@ -64,9 +62,7 @@
           return (yield send(ch, 42));
         });
         p2 = proc(function*() {
-          var opResult;
-          assert.equal(42, opResult = receive(ch));
-          return assert.equal(42, (yield opResult));
+          return assert.equal(42, (yield receive(ch)));
         });
         return (yield receive(p2));
       }));
@@ -74,9 +70,7 @@
         var ch, p1, p2;
         ch = chan();
         p1 = proc(function*() {
-          var opResult;
-          assert.equal(void 0, opResult = receive(ch));
-          return assert.equal(42, (yield opResult));
+          return assert.equal(42, (yield receive(ch)));
         });
         p2 = proc(function*() {
           return (yield ch.close(42));
@@ -90,9 +84,7 @@
           return (yield ch.close(42));
         });
         p2 = proc(function*() {
-          var opResult;
-          assert.equal(42, opResult = receive(ch));
-          return assert.equal(42, (yield opResult));
+          return assert.equal(42, (yield receive(ch)));
         });
         return (yield receive(p2));
       }));
@@ -102,9 +94,7 @@
         var ch, p1, p2;
         ch = chan();
         p1 = proc(function*() {
-          var opResult;
-          assert.equal(false, opResult = send(ch, 42));
-          return assert.equal(true, (yield opResult));
+          return assert.equal(true, (yield send(ch, 42)));
         });
         p2 = proc(function*() {
           return (yield receive(ch));
@@ -118,9 +108,7 @@
           return (yield receive(ch));
         });
         p2 = proc(function*() {
-          var opResult;
-          assert.equal(true, opResult = send(ch, 42));
-          return assert.equal(true, (yield opResult));
+          return assert.equal(true, (yield send(ch, 42)));
         });
         return (yield receive(p1));
       }));
@@ -128,9 +116,7 @@
         var ch, p1, p2;
         ch = chan();
         p1 = proc(function*() {
-          var opResult;
-          assert.equal(false, opResult = send(ch, 42));
-          return assert.equal(false, (yield opResult));
+          return assert.equal(false, (yield send(ch, 42)));
         });
         p2 = proc(function*() {
           return (yield ch.close());
@@ -144,9 +130,7 @@
           return (yield ch.close());
         });
         p2 = proc(function*() {
-          var opResult;
-          assert.equal(false, opResult = send(ch, 42));
-          return assert.equal(false, (yield opResult));
+          return assert.equal(false, (yield send(ch, 42)));
         });
         return (yield receive(p1));
       }));

@@ -39,75 +39,53 @@
 
         it "yields correctly on blocking receive", async ->
           ch = chan()
-          p1 = proc ->
-            assert.equal undefined, opResult = receive ch
-            assert.equal 42, yield opResult
+          p1 = proc -> assert.equal 42, yield receive ch
           p2 = proc -> yield send ch, 42
           yield receive p1
 
         it "yields correctly on immediate receive", async ->
           ch = chan()
           p1 = proc -> yield send ch, 42
-          p2 = proc ->
-            assert.equal 42, opResult = receive ch
-            assert.equal 42, yield opResult
+          p2 = proc -> assert.equal 42, yield receive ch
           yield receive p2
 
         it "yields correctly on blocking receive before done", async ->
           ch = chan()
-          p1 = proc ->
-            assert.equal undefined, opResult = receive ch
-            assert.equal 42, yield opResult
+          p1 = proc -> assert.equal 42, yield receive ch
           p2 = proc -> yield ch.close 42
           yield receive p1
 
         it "yields correctly on immediate receive after done", async ->
           ch = chan()
           p1 = proc -> yield ch.close 42
-          p2 = proc ->
-            assert.equal 42, opResult = receive ch
-            assert.equal 42, yield opResult
+          p2 = proc -> assert.equal 42, yield receive ch
           yield receive p2
 
 
       describe "sending:", ->
 
-Here the immediate result of a `send` operation is `false`, which indicates that the value could not be *immediately* enqueued into channel `ch`, implying that process `p1` is **blocked**. The asynchronous result of the `yield send` expression is `true`, which indicates that the value was indeed *eventually* enqueued successfully into `ch`, implying that `ch` is **not closed**.
-
         it "yields correctly on blocking send", async ->
           ch = chan()
-          p1 = proc ->
-            assert.equal no, opResult = send ch, 42
-            assert.equal yes, yield opResult
+          p1 = proc -> assert.equal yes, yield send ch, 42
           p2 = proc -> yield receive ch
           yield receive p2
-
-Here the immediate result of `send` is `true`, because the channel is already being **pulled** by `p1` awaiting the `receive` operation, which causes the value from `send` to be enqueued immediately into the channel.
 
         it "yields correctly on immediate send", async ->
           ch = chan()
           p1 = proc -> yield receive ch
-          p2 = proc ->
-            assert.equal yes, opResult = send ch, 42
-            assert.equal yes, yield opResult
+          p2 = proc -> assert.equal yes, yield send ch, 42
           yield receive p1
-
-A `send` to a channel that either is already closed or will close before the sent value can be enqueued should, in both cases, yield an immediate result of `false` to indicate asynchrony, and an eventual result of `false` to indicate that the channel was closed before the `send` could be enqueued.
 
         it "yields correctly on blocking send before close", async ->
           ch = chan()
-          p1 = proc ->
-            assert.equal no, opResult = send ch, 42
-            assert.equal no, yield opResult
+          p1 = proc -> assert.equal no, yield send ch, 42
           p2 = proc -> yield ch.close()
           yield receive p2
 
         it "yields correctly on immediate send after close", async ->
           ch = chan()
           p1 = proc -> yield ch.close()
-          p2 = proc ->
-            assert.equal no, opResult = send ch, 42
-            assert.equal no, yield opResult
+          p2 = proc -> assert.equal no, yield send ch, 42
           yield receive p1
 
 

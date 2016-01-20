@@ -16,7 +16,7 @@
         Ball = -> @hits = 0
 
         player = (name, table) -> loop
-          ball = yield receive table
+          ball = yield table
           ball.hits++
           # console.log "#{ball.hits}: #{name}"
           yield sleep 1
@@ -25,9 +25,9 @@
         proc player 'Ping ->', table
         proc player '<- Pong', table
 
-        yield send table, ball = new Ball       # put a ball on the table
-        yield sleep 20                          # wait while players play
-        assert.equal ball, yield receive table  # take ball off the table
+        yield send table, ball = new Ball  # put a ball on the table
+        yield sleep 20                     # wait while players play
+        assert.equal ball, yield table     # take ball off the table
 
 
 #### Prime sieve
@@ -48,20 +48,20 @@ by `source` will always yield the next prime number.
 
         filtering = (input, prime) ->
           loop
-            n = yield receive input
+            n = yield input
             yield send n if n % prime
           return
 
         sieve = ->
           source = proc numbers 2
           loop
-            yield send prime = yield receive source
+            yield send prime = yield source
             source = proc filtering source, prime
           return
 
         primes = proc sieve
         for n in [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47]
-          assert.equal n, yield receive primes
+          assert.equal n, yield primes
         return
 
 
@@ -84,12 +84,12 @@ equivalent, in both value and effect.
           'foo'
 
         consumers = for i in [1..3] then proc ->
-          until final value = yield receive producer
+          until final value = yield producer
             if sanity-- is 0 then throw new Error "Huge mistake"
           value
 
         for c in consumers
-          assert.equal 'foo', yield receive c
+          assert.equal 'foo', yield c
         return
 
 
@@ -119,7 +119,7 @@ the current process, each application of the `run` loop greedily performs as
 many yielding operations as possible, and will break only after encountering a
 channel that causes the process to `block`.
 
-Alternatively a process may be run **lazily**, by including the `yield proc`
+Alternatively a process may be run **lazily**, by including the `yield null`
 expression, which forces control to be yielded back to the scheduler, and
 re-enqueues the process at the back of the global run queue.
 
@@ -132,16 +132,16 @@ cooperatively avoid causing starvation of other scheduled processes.
 
         nibble = go ->
           src = chan.from [1..3]
-          yield receive proc ->
+          yield proc ->
             for i in [1..3]
-              value = yield receive src
-              yield proc
+              value = yield src
+              yield null
               value
 
         gobble = go ->
           src = chan.from [1..9]
-          yield receive proc ->
-            for i in [1..9] then yield receive src
+          yield proc ->
+            for i in [1..9] then yield src
 
 The first process to finish should be `gobble`, even though `nibble` performs
 fewer operations, because the receiving subprocess of `nibble` is lazy.

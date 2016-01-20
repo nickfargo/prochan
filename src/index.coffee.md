@@ -227,10 +227,12 @@ If `channel` is another `Process`, the operation will receive from the **out**
 I/O channel of that process. If no `channel` is specified, the operation will
 receive from the **in** I/O channel of the current process.
 
-    receive = -> switch arguments.length
-      when 0 then receive.$0 arguments...
-      when 1 then receive.$1 arguments...
-      else throw new Error "Arity"
+    receive = ->
+      switch arguments.length
+        when 0 then receive.$0 arguments...
+        when 1 then receive.$1 arguments...
+        else throw new Error "Arity"
+      return
     receive.$0 = -> p = Process.current(); p._in().dequeue p
     receive.$1 = (channel) -> channel.dequeue Process.current()
 
@@ -269,10 +271,12 @@ If `channel` is another `Process`, the operation will send to the **in** I/O
 channel of that process. If no `channel` is specified, the operation will send
 to the **out** I/O channel of the current process.
 
-    send = -> switch arguments.length
-      when 1 then send.$1 arguments...
-      when 2 then send.$2 arguments...
-      else throw new Error "Arity"
+    send = ->
+      switch arguments.length
+        when 1 then send.$1 arguments...
+        when 2 then send.$2 arguments...
+        else throw new Error "Arity"
+      return
     send.$1 = (value) -> p = Process.current(); p._out().enqueue p, value
     send.$2 = (channel, value) -> channel.enqueue Process.current(), value
 
@@ -290,7 +294,7 @@ process.
       immediate = channel.canProcessSend()
       result    = channel.enqueue callback, value
       if closed or immediate then callback.proceed result, closed
-      result
+      return
 
 
 
@@ -306,30 +310,37 @@ Creates a [`Selector`][], which reifies a **select expression**.
 
 ### poll
 
-Performs a [`receive.async`][] channel operation only if one can be
-completed immediately.
+Performs a [`receive.async`][] channel operation only if one can be completed
+immediately. Returns the value received, or the `poll.EMPTY` sentinel if the
+operation could not be performed.
 
     poll = ->
       switch arguments.length
         when 0 then channel = Process.current()._in()
         when 1 then [channel] = arguments
         else throw new Error "Arity"
-      if channel.canProcessReceive() then receive.async channel else poll.EMPTY
+      if channel.canProcessReceive()
+        receive.async channel
+      else
+        poll.EMPTY
     poll.EMPTY = {}
 
 
 
 ### offer
 
-Performs a [`send.async`][] channel operation only if one can be
-completed immediately.
+Performs a [`send.async`][] channel operation only if one can be completed
+immediately. Returns `true` if the operation could be performed, or `false`
+otherwise.
 
     offer = ->
       switch arguments.length
         when 1 then [value] = arguments; channel = Process.current()._out()
         when 2 then [channel, value] = arguments
         else throw new Error "Arity"
-      if channel.canProcessSend() then send.async channel, value else no
+      if result = !!channel.canProcessSend()
+        send.async channel, value
+      result
 
 
 

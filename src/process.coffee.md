@@ -139,11 +139,22 @@ function either `yield`s to a blocking channel operation or `return`s.
         current = p
         try loop
           {value, done} = p.iterator.next p.value
-          if done then p.exit value; break
-          switch value
-            when Process.spawn
-              schedule p
-          break if ~p.flags & RUNNING
+          if done
+            p.exit value
+            break
+          else
+            switch value
+              when undefined
+                # The result of `receive`, `send`, or `select`: do nothing
+                ;
+              when null
+                # The “lazy” idiom: force `p` to the back of the run queue
+                schedule p
+              else
+                # TODO (?): check if `value` is Promise, wrap channel
+                # Implicit receive: assume `value` is a channel
+                value.dequeue p
+            break if ~p.flags & RUNNING
         catch error
           p.kill error
         finally

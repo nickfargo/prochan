@@ -19,7 +19,7 @@
         var ball, results;
         results = [];
         while (true) {
-          ball = (yield receive(table));
+          ball = (yield table);
           ball.hits++;
           (yield sleep(1));
           results.push((yield send(table, ball)));
@@ -30,7 +30,7 @@
       proc(player('<- Pong', table));
       (yield send(table, ball = new Ball));
       (yield sleep(20));
-      return assert.equal(ball, (yield receive(table)));
+      return assert.equal(ball, (yield table));
     }));
     it("sieves the primes", async(function*() {
       var filtering, j, len, n, numbers, primes, ref2, sieve;
@@ -44,7 +44,7 @@
       filtering = function*(input, prime) {
         var n;
         while (true) {
-          n = (yield receive(input));
+          n = (yield input);
           if (n % prime) {
             (yield send(n));
           }
@@ -54,7 +54,7 @@
         var prime, source;
         source = proc(numbers(2));
         while (true) {
-          (yield send(prime = (yield receive(source))));
+          (yield send(prime = (yield source)));
           source = proc(filtering(source, prime));
         }
       };
@@ -62,7 +62,7 @@
       ref2 = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
       for (j = 0, len = ref2.length; j < len; j++) {
         n = ref2[j];
-        assert.equal(n, (yield receive(primes)));
+        assert.equal(n, (yield primes));
       }
     }));
     return it("detects `done` without racing or sentinels", async(function*() {
@@ -81,7 +81,7 @@
         for (i = j = 1; j <= 3; i = ++j) {
           results.push(proc(function*() {
             var value;
-            while (!final(value = (yield receive(producer)))) {
+            while (!final(value = (yield producer))) {
               if (sanity-- === 0) {
                 throw new Error("Huge mistake");
               }
@@ -93,7 +93,7 @@
       })();
       for (j = 0, len = consumers.length; j < len; j++) {
         c = consumers[j];
-        assert.equal('foo', (yield receive(c)));
+        assert.equal('foo', (yield c));
       }
     }));
   });
@@ -125,28 +125,28 @@
       nibble = go(function*() {
         var src;
         src = chan.from([1, 2, 3]);
-        return (yield receive(proc(function*() {
+        return (yield proc(function*() {
           var i, j, results, value;
           results = [];
           for (i = j = 1; j <= 3; i = ++j) {
-            value = (yield receive(src));
-            (yield proc);
+            value = (yield src);
+            (yield null);
             results.push(value);
           }
           return results;
-        })));
+        }));
       });
       gobble = go(function*() {
         var src;
         src = chan.from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-        return (yield receive(proc(function*() {
+        return (yield proc(function*() {
           var i, j, results;
           results = [];
           for (i = j = 1; j <= 9; i = ++j) {
-            results.push((yield receive(src)));
+            results.push((yield src));
           }
           return results;
-        })));
+        }));
       });
       ref2 = (yield* select(nibble, gobble)), value = ref2.value, channel = ref2.channel;
       return assert.equal(channel, gobble);
