@@ -144,7 +144,7 @@ Quickly computable specific queries into the current state of the channel.
 
 #### close
 
-> (`result`: any) → `result`|`undefined`
+> (`result`: any) → `Channel`
 
 Seals off `this` channel’s **inlet**, preventing any further [`send`][]
 operations, and [`dispatch`][]es any awaiting senders or receivers. Remaining
@@ -182,6 +182,7 @@ operations.
         do @buffer?.close
         @flags = @flags & ~(PUSHED | PULLED) | CLOSED
         @result = result
+        this
 
 
 #### enqueue
