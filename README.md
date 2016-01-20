@@ -72,7 +72,7 @@ import {proc, chan, receive, send, final, select} from 'prochan';
 Spawning a process is performed by calling the `proc` function, and passing it a generator function. Outwardly this corresponds to calling `go` or similar in other environments:
 
 ```js
-let p = proc( function* () {
+let p = proc(function* () {
   // ... yield ...
 });
 // >>> Process
@@ -83,8 +83,8 @@ The key distinction of `proc` is that, whereas a call to `go` or similar would r
 However, given equivalent generator functions, the `Process` returned by `proc` may still be consumed in the same manner as the channel returned by `go`:
 
 ```js
-'foo' === yield go( function* () { return 'foo'; } );
-'foo' === yield proc( function* () { return 'foo'; } );
+'foo' === yield go(function* () { return 'foo'; } );
+'foo' === yield proc(function* () { return 'foo'; } );
 ```
 
 > _Discussed further below: **[Process I/O](#process-io)**._
@@ -119,10 +119,11 @@ let ch6 = chan(transducer);  // No explicit buffering, behaves as unbuffered
 Basic communications via channels are performed inside a process by `yield`ing the effect of a `receive` or `send` operation (aliased to `take` and `put`, respectively):
 
 ```js
-proc( function* () {
+proc(function* () {
   let value = yield receive(ch1);
 });
-proc( function* () {
+
+proc(function* () {
   let value = 'foo';
   yield send(ch1, value);
 });
@@ -133,7 +134,7 @@ proc( function* () {
 A process may also directly `yield` a channel, which causes the process to automatically perform a `receive` operation on that channel. Thus the first example above may be expressed equivalently as:
 
 ```js
-proc( function* () {
+proc(function* () {
   let value = yield ch1;
 });
 ```
@@ -143,7 +144,7 @@ proc( function* () {
 In **prochan** the `select` operation (aliased to `alts`) returns a **[`Selector`](https://github.com/nickfargo/prochan/blob/master/src/selector.coffee.md) generator**, intended for immediate use inside a *delegated yield* (`yield*`) expression:
 
 ```js
-proc( function* () {
+proc(function* () {
   let {value, channel} = yield* select([ch1, 42], ch2, ch3);
 });
 ```
@@ -157,26 +158,27 @@ proc( function* () {
 
 #### Process I/O
 
-In **prochan** a process may communicate over its own built-in I/O channels.
+In **prochan** a process may communicate over its own built-in I/O channels, such that the process instance itself may be regarded and referenced as if it were a logical channel.
 
 ```js
-proc( function* () {
-  let p1 = proc( function* () {
+proc(function* () {
+  let p = proc(function* () {
     // (1)
-    let value = yield receive();
-    yield send(value + 1);
+    let value = yield receive(); // from the local input channel
+    yield send(value + 1); // into the local output channel
   });
+
   // (2)
-  send.async( p1, 42 );
-  43 === yield receive(p1);
+  send.async(p, 42);
+  43 === yield p;
 });
 ```
 
-1. Inside the current process (`p1`), a 0-ary `receive` call implies communication over the process’s **input** channel, and likewise a 1-ary `send` call implies communication over the process’s **output** channel.
+1. Inside the generator function of process `p`, a 0-ary `receive` call implies communication over the process’s **input** channel, and likewise a 1-ary `send` call implies communication over the process’s **output** channel.
 
-2. Outside the current process, the process `p1` may be directly passed as an argument to a channel operation, just as if it were a proper channel. When data is *sent* to the process, it is redirected through the process’s **input** channel; and likewise when data is *received* from the process, it is drawn from the process’s **output** channel.
+2. Outside the process `p`, a reference to `p` may be directly passed as an argument to a channel operation, just as if `p` were a proper channel. A **send** operation on a process will send a value to the process’s **input** channel; a **receive** operation on a process will receive from the process’s **output** channel.
 
-By default processes are constructed without I/O channels; an unbuffered channel is instated automatically as needed at either end the first time a channel operation sends to or receives from the process.
+By default processes are constructed without I/O channels. An unbuffered channel is instated automatically as needed at either end the first time a channel operation sends to or receives from the process.
 
 
 #### Channel values and results
@@ -194,7 +196,7 @@ Idiomatic *done*-signaling is performed out-of-band by enclosing a channel opera
 
 ```js
 // Process whose sole responsibility is to read from a channel
-proc( function* () {
+proc(function* () {
   let value;
   while (!final(value = yield ch)) {
     // ... consume `value`s until `ch` is done ...
@@ -249,20 +251,20 @@ while (true) {
 let ch1 = chan(), ch2 = chan(), ch3 = chan();
 
 // Prepare a value to be received from `ch3` ...
-send.async( ch3, 'qux' );
+send.async(ch3, 'qux');
 
 // ... and observe the effect on `select`:
-'qux' === yield proc( function* () {
+'qux' === yield proc(function* () {
   return yield* select
     // this case won’t be selected
-    .send( [ch1, 42], function* (value, channel) {
+    .send([ch1, 42], function* (value, channel) {
       throw new Error;
     })
     // this case will be selected
-    .receive( ch2, ch3, function* (value, channel) {
+    .receive(ch2, ch3, function* (value, channel) {
       return value;
     })
-    .else( function* () {
+    .else(function* () {
       // alternative
     });
 });
