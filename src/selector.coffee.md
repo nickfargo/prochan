@@ -203,7 +203,7 @@ provided to it, unless an `alternative` is defined on `this` selector.
 
 #### next
 
-> Called from [`Process/ioc`][].
+> Called from [`Process/run`][].
 
 Iterator protocol `next`.
 
@@ -328,7 +328,7 @@ to which the selector will `delegate`.
 [`Selector::commit`]: #commit
 [`Selector::iterate`]: #iterate
 [`Process`]: process.coffee.md
-[`Process/ioc`]: process.coffee.md#ioc
+[`Process/run`]: process.coffee.md#run
 [`Operation`]: operation.coffee.md
 [`Operation::proceed`]: operation.coffee.md#proceed
 [`Receive`]: operation.coffee.md#concrete-subclasses
