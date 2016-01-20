@@ -158,7 +158,7 @@ proc(function* () {
 
 #### Process I/O
 
-In **prochan** a process may communicate over its own built-in I/O channels, such that the process instance itself may be regarded and referenced as if it were a logical channel.
+In **prochan** a process may communicate over its own built-in I/O channels.
 
 ```js
 proc(function* () {
