@@ -83,8 +83,8 @@ The key distinction of `proc` is that, whereas a call to `go` or similar would r
 However, given equivalent generator functions, the `Process` returned by `proc` may still be consumed in the same manner as the channel returned by `go`:
 
 ```js
-'foo' === yield receive( go( function* () { return 'foo'; } ) );
-'foo' === yield receive( proc( function* () { return 'foo'; } ) );
+'foo' === yield go( function* () { return 'foo'; } );
+'foo' === yield proc( function* () { return 'foo'; } );
 ```
 
 > _Discussed further below: **[Process I/O](#process-io)**._
@@ -116,15 +116,25 @@ let ch6 = chan(transducer);  // No explicit buffering, behaves as unbuffered
 
 #### Communication: [`receive`](https://github.com/nickfargo/prochan/blob/master/src/index.coffee.md#receive), [`send`](https://github.com/nickfargo/prochan/blob/master/src/index.coffee.md#send)
 
-Basic communications via channels are performed inside a process by `yield`ing the effect of a 1-ary `receive` or 2-ary `send` operation (aliased to `take` and `put`, respectively):
+Basic communications via channels are performed inside a process by `yield`ing the effect of a `receive` or `send` operation (aliased to `take` and `put`, respectively):
 
 ```js
 proc( function* () {
-  let value = yield receive( ch1 );
+  let value = yield receive(ch1);
 });
 proc( function* () {
   let value = 'foo';
-  yield send( ch1, value );
+  yield send(ch1, value);
+});
+```
+
+##### Implicit `receive`
+
+A process may also directly `yield` a channel, which causes the process to automatically perform a `receive` operation on that channel. Thus the first example above may be expressed equivalently as:
+
+```js
+proc( function* () {
+  let value = yield ch1;
 });
 ```
 
@@ -154,17 +164,17 @@ proc( function* () {
   let p1 = proc( function* () {
     // (1)
     let value = yield receive();
-    yield send( value + 1 );
+    yield send(value + 1);
   });
   // (2)
   send.async( p1, 42 );
-  43 === yield receive( p1 );
+  43 === yield receive(p1);
 });
 ```
 
-1. Inside the current process (`p1`), a 0-ary `receive` call implies communication over the process’s **in** channel, and likewise a 1-ary `send` call implies communication over the process’s **out** channel.
+1. Inside the current process (`p1`), a 0-ary `receive` call implies communication over the process’s **input** channel, and likewise a 1-ary `send` call implies communication over the process’s **output** channel.
 
-2. Outside the current process, the process `p1` may be directly passed as an argument to a channel operation, just as if it were a proper channel. When data is *sent* to the process, it is redirected through the process’s **in** channel; and likewise when data is *received* from the process, it is drawn from the process’s **out** channel.
+2. Outside the current process, the process `p1` may be directly passed as an argument to a channel operation, just as if it were a proper channel. When data is *sent* to the process, it is redirected through the process’s **input** channel; and likewise when data is *received* from the process, it is drawn from the process’s **output** channel.
 
 By default processes are constructed without I/O channels; an unbuffered channel is instated automatically as needed at either end the first time a channel operation sends to or receives from the process.
 
@@ -186,7 +196,7 @@ Idiomatic *done*-signaling is performed out-of-band by enclosing a channel opera
 // Process whose sole responsibility is to read from a channel
 proc( function* () {
   let value;
-  while (!final(value = yield receive(ch))) {
+  while (!final(value = yield ch)) {
     // ... consume `value`s until `ch` is done ...
   }
   // Optionally, pass along the final result value received from `ch`.
