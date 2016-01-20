@@ -213,7 +213,7 @@ assigment as its (ignored) argument expression, e.g.:
 
 > Aliases: `take`, `get`
 
-> (`channel?`: {[`Channel`][] | [`Process`][]}) → any
+> (`channel?`: {[`Channel`][] | [`Process`][]}) → void
 
 Starts a **receive** channel operation on the **current process**.
 
@@ -223,9 +223,9 @@ received `value` is conveyed upon continuation.
 
 > `value = yield receive( channel )`
 
-If `channel` is another `Process`, the operation will receive from the **out**
-I/O channel of that process. If no `channel` is specified, the operation will
-receive from the **in** I/O channel of the current process.
+If `channel` is another `Process`, the operation will receive from the
+**output channel** of that process. If no `channel` is specified, the operation
+will receive from the **input channel** of the current process.
 
     receive = ->
       switch arguments.length
@@ -257,7 +257,7 @@ a process.
 
 > Alias: `put`
 
-> (`channel?`: {[`Channel`][] | [`Process`][]}, `value`: any) → boolean
+> (`channel?`: {[`Channel`][] | [`Process`][]}, `value`: any) → void
 
 Starts a **send** channel operation on the **current process**.
 
@@ -267,9 +267,9 @@ available for the `value` to be sent.
 
 > `yield send( channel, value )`
 
-If `channel` is another `Process`, the operation will send to the **in** I/O
-channel of that process. If no `channel` is specified, the operation will send
-to the **out** I/O channel of the current process.
+If `channel` is another `Process`, the operation will send to the
+**input channel** of that process. If no `channel` is specified, the operation
+will send to the **output channel** of the current process.
 
     send = ->
       switch arguments.length
