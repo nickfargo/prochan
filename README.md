@@ -252,7 +252,7 @@ let ch1 = chan(), ch2 = chan(), ch3 = chan();
 send.async( ch3, 'qux' );
 
 // ... and observe the effect on `select`:
-'qux' === yield receive( proc( function* () {
+'qux' === yield proc( function* () {
   return yield* select
     // this case won’t be selected
     .send( [ch1, 42], function* (value, channel) {
@@ -265,7 +265,7 @@ send.async( ch3, 'qux' );
     .else( function* () {
       // alternative
     });
-}));
+});
 ```
 
 
