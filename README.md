@@ -174,11 +174,11 @@ proc(function* () {
 });
 ```
 
-1. Inside the generator function of process `p`, a 0-ary `receive` call implies communication over the process’s **input** channel, and likewise a 1-ary `send` call implies communication over the process’s **output** channel.
+1. Inside the generator function of the current process `p`, a 0-ary `receive` call implies communication over `p`’s **input** channel, and a 1-ary `send` call implies communication over `p`’s **output** channel.
 
-2. Outside the process `p`, a reference to `p` may be directly passed as an argument to a channel operation, just as if `p` were a proper channel. A **send** operation on a process will send a value to the process’s **input** channel; a **receive** operation on a process will receive from the process’s **output** channel.
+2. Externally, `p` may be treated as if it were a proper channel, and so is a valid first argument for channel operations. Here the relations are reversed: a `send` on `p` will be routed to `p`’s **input** channel, and a `receive` on `p` will be routed from `p`’s **output** channel.
 
-By default processes are constructed without I/O channels. An unbuffered channel is instated automatically as needed at either end the first time a channel operation sends to or receives from the process.
+By default a process is constructed without I/O channels. An unbuffered channel is instated automatically as needed at either end the first time a channel operation sends to or receives from the process.
 
 
 #### Channel values and results
