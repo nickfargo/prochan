@@ -148,7 +148,7 @@
           return results;
         }));
       });
-      ref2 = (yield* select(nibble, gobble)), value = ref2.value, channel = ref2.channel;
+      ref2 = (yield select(nibble, gobble)), value = ref2.value, channel = ref2.channel;
       return assert.equal(channel, gobble);
     }));
   });

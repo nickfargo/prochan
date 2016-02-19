@@ -52,18 +52,27 @@ Called by [`Selector/clear`][] to immediately garbage-collect its operations.
       free: -> @channel.cancel this
 
 
+#### execute
+
+> Defined concretely by `Receive` and `Send`, which route to
+  [`Channel::dequeue`][] and [`Channel::enqueue`][], respectively.
+
+Called by [`Selector::commit`][] when `this` `Operation` can be immediately
+performed by its `selector`.
+
+      execute: ->
+
+
 
 ### Concrete subclasses
 
       pooled class @Receive extends this
-        type: 'receive'
-        isReady: -> @channel.canProcessReceive()
         detain:  -> @channel.detain this
+        execute: -> @channel.dequeue @selector.process
 
       pooled class @Send extends this
-        type: 'send'
-        isReady: -> @channel.canProcessSend()
         detain:  -> @channel.detain this, @value
+        execute: -> @channel.enqueue @selector.process, @value
 
 
 
@@ -71,6 +80,9 @@ Called by [`Selector/clear`][] to immediately garbage-collect its operations.
 
 [`Selector`]: selector.coffee.md
 [`Selector/clear`]: selector.coffee.md#clear
+[`Selector::commit`]: selector.coffee.md#commit
+[`Channel::enqueue`]: channel.coffee.md#enqueue
+[`Channel::dequeue`]: channel.coffee.md#dequeue
 [`Channel::dispatch`]: channel.coffee.md#dispatch
 [`Receive`]: #concrete-subclasses
 [`Send`]: #concrete-subclasses

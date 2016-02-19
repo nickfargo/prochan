@@ -146,5 +146,5 @@ cooperatively avoid causing starvation of other scheduled processes.
 The first process to finish should be `gobble`, even though `nibble` performs
 fewer operations, because the receiving subprocess of `nibble` is lazy.
 
-        {value, channel} = yield from select nibble, gobble
+        {value, channel} = yield select nibble, gobble
         assert.equal channel, gobble

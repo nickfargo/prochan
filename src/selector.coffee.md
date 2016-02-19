@@ -20,22 +20,34 @@ as any [`Operation`][]’s associated [`Channel`][] is ready to proceed with
 communication.
 
     class Selector
-      { Receive, Send } = Operation
+      {Receive, Send} = Operation
 
       INCIPIENT = 0x01
-      ACTIVATED = 0x02
-      COMMITTED = 0x04
-      COMPLETED = 0x08
-      IMMEDIATE = 0x10
+      IMMEDIATE = 0x02
+      EVALUATED = 0x04
+      DELEGATED = 0x08
+      COMMITTED = 0x10
+      FINALIZED = 0x20
 
 
-A `Selector` is itself a generator, to be delegated (`yield* select...`) and
-consumed immediately, one time only. In this way it acts as an indirection to a
-`delegate` generator, the identity of which will be determined by the selection
-of one of the operations.
+### Induction and delegation
+
+A select expression may take the **induction form** `yield select`. In this
+form, the [`Process/run`][] loop will recognize a `Selector` by calling its
+`induce` implementation, which directly causes the selector to be `evaluate`d.
+
+Moreover, a `Selector` is its own iterator. This reifies the **delegated form**
+`yield* select`. In this form, channel operation `candidates` are declared and
+associated with a **consequent** generator function. The selector will be
+`evaluate`d automatically by [`Process/run`][] calling its `next` method. Then
+when an operation is selected, its consequent is called, producing a `delegate`
+generator to which the `process.iterator` is delegated.
+
+> See also: *[Deployment methods][]*
 
       @::[Symbol?.iterator or '@@iterator'] = -> this
 
+      INITIAL_ITERATOR_RESULT = value: undefined, done: no
 
 
 ### Constructor
@@ -43,11 +55,11 @@ of one of the operations.
       constructor: ->
         @flags       = INCIPIENT
         @process     = Process.current()
-        @operations  = []
+        @candidates  = []
         @alternative = null
         @arbiter     = null
         @delegate    = null
-        @value       = undefined
+        @result      = null
 
 
 
@@ -57,45 +69,22 @@ of one of the operations.
       last     = (a) -> a[ a.length - 1 ]
       randomly = (a) -> a[ Math.random() * a.length | 0 ]
 
-
-#### delegable
-
-Wraps a non-function `label` value in a generator function that can produce a
-`delegate` generator for the selector, where `delegate` immediately returns an
-object `{label, value, channel}` to the calling generator.
-
-> e.g.: `{label, value, channel} = yield* select.receive(ch1, 'label').(...)`
-
-      delegable = (label) ->
-        if typeof label is 'function'
-        then label
-        else (value, channel) ->
-          next: ->
-            value: {label, value, channel}
-            done: yes
-
-
-#### destructure
-
-Destructures raw arguments provided in the form of `(args..., consequent?)` and
-if necessary casts `consequent` as a proper delegable generator function.
-
-      destructure = (args..., consequent) ->
-        switch typeof consequent
-          when 'function' then ;
-          when 'string'
-            consequent = delegable consequent
+      destructure = (args...) ->
+        switch typeof lastArg = args.pop()
+          when 'function', 'string'
+            consequent = lastArg
           else
-            args.push consequent
-            consequent = delegable()
+            args.push lastArg if lastArg?
         [args, consequent]
 
 
 
-### Class functions
+### Static functions
 
 
 #### select
+
+This is exported as the user-facing `select` function.
 
       @select = ->
         [operations, consequent] = destructure arguments...
@@ -121,151 +110,197 @@ Allow chaining off [`select`][].
 
 Preset an `arbiter`.
 
-      @select.first = -> (new Selector).arbitrate first
-      @select.last  = -> (new Selector).arbitrate last
+      @select.first   = -> (new Selector).arbitrate first
+      @select.last    = -> (new Selector).arbitrate last
 
 
 
-### Methods
+### Constructive methods
+
+These methods may only be called prior to `this` selector being `evaluate`d.
 
 
 #### receive
 
-Adds a [`Receive`][] [`Operation`][] to the selector.
+Adds one or more [`Receive`][] [`Operation`][]s to the selector, optionally
+associating a single `consequent` label or generator function with this group.
 
       receive: ->
-        throw new Error if ~@flags & INCIPIENT
+        throw new Error "Late" if ~@flags & INCIPIENT
         [channels, consequent] = destructure arguments...
         for channel in channels when channel?
-          ready = channel.canProcessReceive()
-          if @flags & IMMEDIATE
-            if ready
-              @operations.push Receive.alloc this, consequent, channel
-          else
-            if ready
+          noneAreReadyYet = ~@flags & IMMEDIATE
+          thisOneIsReady = channel.canProcessReceive()
+          if noneAreReadyYet or thisOneIsReady
+            if noneAreReadyYet and thisOneIsReady
               @flags |= IMMEDIATE
               do @clear
-            @operations.push Receive.alloc this, consequent, channel
+            @candidates.push Receive.alloc this, consequent, channel
         this
 
 
 #### send
 
-Adds a [`Send`][] [`Operation`][] to the selector.
+Adds one or more [`Send`][] [`Operation`][]s to the selector, optionally
+associating a single `consequent` label or generator function with this group.
 
       send: ->
-        throw new Error if ~@flags & INCIPIENT
+        throw new Error "Late" if ~@flags & INCIPIENT
         [pairs, consequent] = destructure arguments...
         for [channel, value] in pairs when channel?
-          ready = channel.canProcessSend()
-          if @flags & IMMEDIATE
-            if ready
-              @operations.push Send.alloc this, consequent, channel, value
-          else
-            if ready
+          noneAreReadyYet = ~@flags & IMMEDIATE
+          thisOneIsReady = channel.canProcessSend()
+          if noneAreReadyYet or thisOneIsReady
+            if noneAreReadyYet and thisOneIsReady
               @flags |= IMMEDIATE
               do @clear
-            @operations.push Send.alloc this, consequent, channel, value
+            @candidates.push Send.alloc this, consequent, channel, value
         this
 
 
 #### else
 
-Declares a generator function as the final `alternative`, to which the
-containing `process` will immediately delegate if all previously declared
-`operations` would have otherwise caused the process to block.
+Declares a final `alternative` label or generator function. The selector will
+immediately `commit` to the alternative if none of the declared channel
+operation `candidates` may be performed at evaluation time.
 
-Freezes `this` (i.e. prohibits further additions via [`receive`][]|[`send`][]).
+Freezes `this`, prohibiting further construction via [`receive`][]|[`send`][]).
 
       else: (alternative) ->
         throw new Error "Early" if ~@flags & INCIPIENT
         @flags &= ~INCIPIENT
-        throw new Error "Late" if @flags & ACTIVATED or @alternative?
-        @alternative = delegable alternative
+        throw new Error "Late" if @flags & EVALUATED or @alternative?
+        @alternative = alternative
         this
 
 
 #### arbitrate
 
-`(arbiter: Array[operation] -> operation)`
+`(arbiter: Array[Operation] -> Operation)`
 
-Assigns an `arbiter` function to `this` selector, to be used to select one
-operation from a list of multiple operations that are immediately ready.
-
-The `arbiter` must return one [`Operation`][] from the list of operations
-provided to it, unless an `alternative` is defined on `this` selector.
+Assigns an `arbiter` function to `this` selector. At evaluation time, unless an
+`alternative` is defined on `this` selector, this function must return one
+[`Operation`][] from a provided array of `candidates` that are immediately
+ready.
 
       arbitrate: (arbiter) ->
-        throw new Error "Late" if @flags & ACTIVATED or @arbiter?
+        throw new Error "Late" if @flags & EVALUATED or @arbiter?
         @arbiter = arbiter
         this
+
+
+
+### Deployment methods
+
+A `Process`’s generator function can deploy a `Selector` in one of two ways:
+
+- By **induction** — the process generator `yield`s the selector directly to
+  the [`Process/run`][] loop. After the selector `commit`s, the generator will
+  proceed with a yielded `{value, channel, label}` structure.
+
+- By **delegation** — the process generator `yield*`s into the selector. After
+  the selector `commit`s to an operation, that operation’s `consequent`
+  function is called with arguments `(value, channel)`, returning a generator
+  to which the process generator delegates.
+
+
+#### induce
+
+> Called from [`Process/run`][].
+
+`Inducer` interface, by which [`Process/run`][] `evaluate`s a `yield select`
+expression.
+
+If evaluation caused the selector to `commit` immediately, then it will have
+produced a `result` structure, which is written directly to the `process`
+*register*, from which it will be read and conveyed as the evaluation of the
+`yield select` expression.
+
+      induce: (p) ->
+        throw new Error "Process mismatch" if p isnt @process
+        throw new Error "Late" if @flags & EVALUATED
+
+        do @evaluate
+
+        if @flags & COMMITTED
+          @process.value = @result
 
 
 #### next
 
 > Called from [`Process/run`][].
 
-Iterator protocol `next`.
+ES6 Iterator interface, through which [`Process/run`][] delegates to a
+`yield* select` expression.
 
-The first call seals, evaluates, and activates `this` selector.
+The first call to `next` `evaluate`s `this` selector.
 
-If any `operations` are ready to be performed on their respective channels then
-exactly one of these operations is selected, either by the `arbiter` function
-or `randomly`. The selector `commit`s to this operation, which produces the
-`delegate` generator, to which this and all subsequent calls to `next` will be
-forwarded. If no `operations` are ready but an `alternative` generator function
-has been defined by an `else` declaration, then the `alternative` will produce
-the `delegate`.
-
-Otherwise the selector’s `process` must block. Each of the `operations` is
-`detain`ed by its channel, and the `process` will await the first operation
-that becomes ready.
+Once `this` `Selector` `commit`s to one of its `candidates`, that selected
+`Operation`’s associated `consequent` will have created a `delegate` generator,
+to which each subsequent call to `next` is forwarded.
 
       next: (value) ->
-        if ~@flags & ACTIVATED
-          @flags = @flags & ~INCIPIENT | ACTIVATED
+        if ~@flags & EVALUATED
+          @flags |= DELEGATED
+          do @evaluate
 
-          # If any of the operations is ready, IMMEDIATE will already be set
-          if @flags & IMMEDIATE then op = (@arbiter or randomly) @operations
+        if ~@flags & DELEGATED
+          throw new Error "Expected a delegated generator"
 
-          if op?
-            if op.type is 'send' # TODO: suck less
-              value = not op.channel.isClosed()
-            @commit op, value
-            @iterate value
-          else if @alternative
-            do @commit
-            @iterate()
-          else
-            @process.block this
-            do op.detain for op in @operations
-            value: undefined, done: no
-
+        if ~@flags & COMMITTED
+          INITIAL_ITERATOR_RESULT
         else
-          @iterate value
+          result = @delegate.next value
+          do @finalize if result.done
+          result
 
 
-#### proceedWith
 
-> Called from [`Operation::proceed`][], only after `this` selector has
-  `block`ed its `process` to wait for one of its `operations` to become ready.
+### Executive methods
 
-Forwards the call received by the ready `operation` from
-[`Channel::dispatch`][] through to `this` selector’s awaiting `process`.
+Seals `this` selector, preventing addition of further operations. Proceeds to
+either `commit` one of the operation `candidates` if possible, or `commit` the
+`alternative` if one was defined, or else `block` the associated `process` and
+await the first operation that becomes ready.
 
-      proceedWith: (operation, value, isFinal) ->
-        @commit operation, value # invalidates and recycles `operation`
-        @flags |= ACTIVATED
-        @process.value = @value # because selected operation proxies process
-        @process.proceed value, isFinal
+      evaluate: ->
+        throw new Error "Already evaluated" if @flags & EVALUATED
+        @flags = @flags & ~INCIPIENT | EVALUATED
+
+        if @flags & IMMEDIATE
+          op = (@arbiter or randomly) @candidates
+
+        if op?
+          @commit op
+        else if @alternative?
+          @commit null
+        else
+          @process.block this
+          do op.detain for op in @candidates
+        return
 
 
 #### commit
 
-> Called once, from either [`Selector::next`][] or [`Selector::proceedWith`][].
+> Called once, from [`Selector::evaluate`][] or [`Selector::proceedWith`][].
 
-Commits `this` selector to one of its `operation`s, and produces the generator
-to which the selector will `delegate`.
+Commits `this` selector to one of its operation `candidates`. If any operation
+is ready at evaluation time, then `commit` will be called immediately via
+`evaluate`, and the selected `operation` will be `execute`d on its associated
+`channel`, returning the `value` to be committed. Otherwise the selector’s
+`process` will have blocked, and `commit` will be called during a future run
+via `proceedWith`, with a `value` argument supplied by the instigating channel.
+
+If `this` selector expresses the **induction form** `yield select`, then the
+selector’s `result` is recorded as a structure containing the `operation`’s
+result `value`, its `channel`, and its `consequent` interpreted as a `label`.
+
+If `this` selector expresses the **delegated form** `yield* select`, then the
+selected `operation`’s associated `consequent` must be a generator function.
+This function is called and returns the generator to which the selector will
+`delegate` all subsequent calls to `next` received from [`Process/run`][].
+
+> See also: *[Deployment methods][]*, [`Operation::execute`][]
 
       commit: (operation, value) ->
         throw new Error "Already committed" if @flags & COMMITTED
@@ -273,10 +308,21 @@ to which the selector will `delegate`.
 
         if operation?
           throw new Error "Foreign operation" if operation.selector isnt this
-          @value    = operation.value
-          @delegate = operation.consequent value, operation.channel
+
+          if @flags & IMMEDIATE
+            value = operation.execute()
+
+          {consequent, channel} = operation
+          if @flags & DELEGATED
+            @delegate = consequent value, channel
+          else
+            @result = {label: consequent, value, channel}
+
         else
-          @delegate = @alternative()
+          if @flags & DELEGATED
+            @delegate = @alternative()
+          else
+            @result = label: @alternative, value: undefined, channel: null
 
         do @clear
         @alternative = null
@@ -284,53 +330,70 @@ to which the selector will `delegate`.
         return
 
 
-#### iterate
+#### proceedWith
 
-> Called from [`Selector::next`][].
+> Called from [`Operation::proceed`][], only if `this` selector has `block`ed
+  its `process`.
 
-      iterate: (value) ->
-        result = @delegate.next value
-        do @complete if result.done
-        result
+Forwards the `proceed` call from [`Channel::dispatch`][], received by the ready
+`operation`, through to `this` selector’s awaiting `process`.
+
+The `operation` must be one of the selector’s `candidates`, which will have
+just been `dispatch`ed by its `channel`.
+
+Before the `operation` is `commit`ted, its `operation.value` is written to the
+the process `register` (i.e. its `value` field). This necessarily affects only
+blocking **send** operations; recall that the *register* is simply a space in
+which an awaiting sender process’s value is held until the scheduler is ready
+to convey that value to another process.
+
+> See also: [`Process::proceed`][]
+
+      proceedWith: (operation, value, isFinal) ->
+        throw new Error "Requires blocking select" if @flags & IMMEDIATE
+        @process.register operation.value, isFinal
+        @commit operation, value
+        output = if @flags & DELEGATED then value else @result
+        @process.proceed output, isFinal
 
 
 #### clear
 
-> Called from [`Selector::commit`][], [`Selector::receive`][],
-  [`Selector::send`][].
-
       clear: ->
-        do op.free while op = @operations.pop()
+        do op.free while op = @candidates.pop()
         return
 
 
-#### complete
+#### finalize
 
-> Called from [`Selector::iterate`][].
-
-      complete: ->
-        @flags    = COMPLETED
+      finalize: ->
+        @flags   |= FINALIZED
         @process  = null
         @delegate = null
-        @value    = undefined
+        @result   = null
+        return
 
 
 
 
+
+[Deployment methods]: #deployment-methods
 
 [`select`]: #select
 [`receive`]: #receive
 [`send`]: #send
 [`Selector::receive`]: #receive
 [`Selector::send`]: #send
+[`Selector::induce`]: #induce
 [`Selector::next`]: #next
-[`Selector::proceedWith`]: #proceedwith
+[`Selector::evaluate`]: #evaluate
 [`Selector::commit`]: #commit
-[`Selector::iterate`]: #iterate
+[`Selector::proceedWith`]: #proceedwith
 [`Process`]: process.coffee.md
 [`Process/run`]: process.coffee.md#run
 [`Operation`]: operation.coffee.md
 [`Operation::proceed`]: operation.coffee.md#proceed
+[`Operation::execute`]: operation.coffee.md#execute
 [`Receive`]: operation.coffee.md#concrete-subclasses
 [`Send`]: operation.coffee.md#concrete-subclasses
 [`Channel`]: channel.coffee.md

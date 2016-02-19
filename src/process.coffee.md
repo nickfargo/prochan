@@ -137,28 +137,54 @@ function either `yield`s to a blocking channel operation or `return`s.
         do p.throw if ~p.flags & SCHEDULED
         p.flags = RUNNING
         current = p
+
         try loop
           {value, done} = p.iterator.next p.value
+
           if done
             p.exit value
             break
-          else
-            switch value
-              when undefined
-                # The result of `receive`, `send`, or `select`: do nothing
-                ;
-              when null
-                # The “lazy” idiom: force `p` to the back of the run queue
-                schedule p
-              else
-                # TODO (?): check if `value` is Promise, wrap channel
-                # Implicit receive: assume `value` is a channel
-                value.dequeue p
-            break if ~p.flags & RUNNING
+
+Inspect `value` to determine how the current run of `p` should proceed:
+
+          switch value
+
+**Do nothing** — the result of calling `receive` or `send`. Side-effects of
+these operations will have determined whether `p`’s run will continue.
+
+            when undefined then ;
+
+**The “lazy” idiom** — no communication takes place. Instead `p` cooperatively
+defers to the system, which forces `p` to the back of the run queue.
+
+            when null then schedule p
+
+**Operate by induction** — `value` must resolve to an **inducer** type, which
+defines the induced behavior:
+
+* If `value` can be resolved as an `Outlet`, including a `Channel`, `Process`,
+  or a `Promise` that can be wrapped in a channel, then an *implicit receive*
+  is performed on that `value`.
+
+* If `value` is a `Selector`, then it is `evaluate`d immediately, and the
+  side-effects of that will have determined whether `p`’s run will continue.
+
+            else
+              # TODO: If `value` is a Promise, wrap it in a channel
+              inducer =
+                if 0 and typeof value.then is 'function'
+                then Channel.fromPromise value
+                else value
+              inducer.induce p
+
+          break if ~p.flags & RUNNING
+
         catch error
           p.kill error
+
         finally
           current = null
+
         return
 
 
@@ -233,6 +259,10 @@ Public accessors to the attenuated I/O ports.
 
       in:  -> @_in().in()
       out: -> @_out().out()
+
+Being an indirection to a `Channel`, `Process` likewise implements `Inducer`.
+
+      induce: (executor) -> @dequeue executor
 
 I/O channel state predicates.
 

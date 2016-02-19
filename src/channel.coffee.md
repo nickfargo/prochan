@@ -142,6 +142,14 @@ Quickly computable specific queries into the current state of the channel.
       out: -> new Outlet this
 
 
+#### induce
+
+The `Inducer` implementation delegates directly to `dequeue`. This is used by
+[`Process/run`][] to facilitate the *implicit receive* syntax (`v = yield ch`).
+
+      induce: (executor) -> @dequeue executor
+
+
 #### close
 
 > (`result`: any) → `Channel`
@@ -334,6 +342,7 @@ Called from [`Operation::free`][], in turn from [`Selector/clear`][], after a
         operation._prev = operation._next = null
 
 
+
 ### Diagnostics
 
       toString: -> """
@@ -373,6 +382,7 @@ Called from [`Operation::free`][], in turn from [`Selector/clear`][], after a
 [`Operation::free`]: operation.coffee.md#free
 [`Selector/clear`]: selector.coffee.md#clear
 [`Process`]: process.coffee.md
+[`Process/run`]: process.coffee.md#run
 
 [`send`]: index.coffee.md#send
 [`receive`]: index.coffee.md#receive
