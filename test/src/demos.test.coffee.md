@@ -131,20 +131,19 @@ cooperatively avoid causing starvation of other scheduled processes.
       it "allows eager-to-lazy communication", async ->
 
         nibble = proc ->
-          src = chan.from [1..3]
-          yield proc ->
-            for i in [1..3]
-              value = yield src
-              yield null
-              value
+          source = chan.from([1..3]).close()
+          until final value = yield source
+            yield null
+            value
 
         gobble = proc ->
-          src = chan.from [1..9]
-          yield proc ->
-            for i in [1..9] then yield src
+          source = chan.from([1..9]).close()
+          until final value = yield source
+            value
 
-The first process to finish should be `gobble`, even though `nibble` performs
-fewer operations, because the receiving subprocess of `nibble` is lazy.
+The first process to finish is `gobble`, even though `nibble` performs fewer
+operations, because `nibble` iterates lazily as it consumes from its `source`
+channel, while `gobble` iterates greedily.
 
         {value, channel} = yield select nibble, gobble
         assert.equal channel, gobble

@@ -123,30 +123,23 @@
     return it("allows eager-to-lazy communication", async(function*() {
       var channel, gobble, nibble, ref2, value;
       nibble = proc(function*() {
-        var src;
-        src = chan.from([1, 2, 3]);
-        return (yield proc(function*() {
-          var i, j, results, value;
-          results = [];
-          for (i = j = 1; j <= 3; i = ++j) {
-            value = (yield src);
-            (yield null);
-            results.push(value);
-          }
-          return results;
-        }));
+        var results, source, value;
+        source = chan.from([1, 2, 3]).close();
+        results = [];
+        while (!final(value = (yield source))) {
+          (yield null);
+          results.push(value);
+        }
+        return results;
       });
       gobble = proc(function*() {
-        var src;
-        src = chan.from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-        return (yield proc(function*() {
-          var i, j, results;
-          results = [];
-          for (i = j = 1; j <= 9; i = ++j) {
-            results.push((yield src));
-          }
-          return results;
-        }));
+        var results, source, value;
+        source = chan.from([1, 2, 3, 4, 5, 6, 7, 8, 9]).close();
+        results = [];
+        while (!final(value = (yield source))) {
+          results.push(value);
+        }
+        return results;
       });
       ref2 = (yield select(nibble, gobble)), value = ref2.value, channel = ref2.channel;
       return assert.equal(channel, gobble);
