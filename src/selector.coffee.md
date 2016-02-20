@@ -96,6 +96,14 @@ This is exported as the user-facing `select` function.
         s
 
 
+#### first/last
+
+Preset an `arbiter`.
+
+      @select.first = -> (new Selector).arbitrate first
+      @select.last  = -> (new Selector).arbitrate last
+
+
 #### receive/send
 
 Allow chaining off [`select`][].
@@ -106,24 +114,26 @@ Allow chaining off [`select`][].
       @select.send    = -> (new Selector).send arguments...
 
 
-#### first/last
-
-Preset an `arbiter`.
-
-      @select.first   = -> (new Selector).arbitrate first
-      @select.last    = -> (new Selector).arbitrate last
-
-
 
 ### Constructive methods
 
-These methods may only be called prior to `this` selector being `evaluate`d.
+These methods ([`receive`][] [`send`][] [`else`][] [`arbitrate`][]) are:
+
+- chainable (off [`select`][]), and
+- must be called prior to `this` selector being `evaluate`d.
 
 
 #### receive
 
-Adds one or more [`Receive`][] [`Operation`][]s to the selector, optionally
-associating a single `consequent` label or generator function with this group.
+Accepts an argument list of `channels`, followed by an optional `consequent`
+label or generator function.
+
+Defines one or more [`Receive`][] [`Operation`][]s on each named channel, and
+adds these to the list of `candidates`, each associated with the optional
+`consequent`.
+
+If any of the `candidates` is ready to be performed, then any subsequently
+added operation must also be ready, or it is discarded.
 
       receive: ->
         throw new Error "Late" if ~@flags & INCIPIENT
@@ -141,8 +151,10 @@ associating a single `consequent` label or generator function with this group.
 
 #### send
 
-Adds one or more [`Send`][] [`Operation`][]s to the selector, optionally
-associating a single `consequent` label or generator function with this group.
+Accepts an argument list of `[channel, value]` arrays, followed by an optional
+`consequent` label or generator function.
+
+Otherwise identical to [`receive`][], but for defining [`Send`][] candidates.
 
       send: ->
         throw new Error "Late" if ~@flags & INCIPIENT
@@ -161,10 +173,10 @@ associating a single `consequent` label or generator function with this group.
 #### else
 
 Declares a final `alternative` label or generator function. The selector will
-immediately `commit` to the alternative if none of the declared channel
+immediately `commit` to the alternative only if none of the declared channel
 operation `candidates` may be performed at evaluation time.
 
-Freezes `this`, prohibiting further construction via [`receive`][]|[`send`][]).
+Seals `this`, prohibiting further construction via [`receive`][]|[`send`][].
 
       else: (alternative) ->
         throw new Error "Early" if ~@flags & INCIPIENT
@@ -178,8 +190,8 @@ Freezes `this`, prohibiting further construction via [`receive`][]|[`send`][]).
 
 `(arbiter: Array[Operation] -> Operation)`
 
-Assigns an `arbiter` function to `this` selector. At evaluation time, unless an
-`alternative` is defined on `this` selector, this function must return one
+Assigns an `arbiter` function to `this` selector. At evaluation time, unless
+there is an `alternative` defined on `this`, the `arbiter` must return one
 [`Operation`][] from a provided array of `candidates` that are immediately
 ready.
 
