@@ -67,10 +67,12 @@ performed by its `selector`.
 ### Concrete subclasses
 
       pooled class @Receive extends this
+        type: 'receive'
         detain:  -> @channel.detain this
         execute: -> @channel.dequeue @selector.process
 
       pooled class @Send extends this
+        type: 'send'
         detain:  -> @channel.detain this, @value
         execute: -> @channel.enqueue @selector.process, @value
 

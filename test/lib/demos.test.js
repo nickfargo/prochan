@@ -122,7 +122,7 @@
   describe("Laziness:", function() {
     return it("allows eager-to-lazy communication", async(function*() {
       var channel, gobble, nibble, ref2, value;
-      nibble = go(function*() {
+      nibble = proc(function*() {
         var src;
         src = chan.from([1, 2, 3]);
         return (yield proc(function*() {
@@ -136,7 +136,7 @@
           return results;
         }));
       });
-      gobble = go(function*() {
+      gobble = proc(function*() {
         var src;
         src = chan.from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
         return (yield proc(function*() {

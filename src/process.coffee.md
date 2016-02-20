@@ -250,7 +250,11 @@ defines the induced behavior:
 
 #### I/O
 
-Private accessors to the I/O channels of the `Process`.
+`Process` implements the **inlet** and **outlet** interfaces, such that for any
+channel operation, substituting a `Process` for a [`Channel`][] must route the
+operation to the appropriate I/O port of the `Process`.
+
+Private accessors to the I/O ports of the `Process`.
 
       _in:  -> @cin  ?= new Channel
       _out: -> @cout ?= new Channel
@@ -271,20 +275,29 @@ I/O channel state predicates.
       isClosed:          -> !!@cin?.isClosed()
       isDone:            -> !!@cout?.isDone()
 
-Providing a `Process` to an operation that expects a [`Channel`][] will route
-the communication to the process’s I/O ports.
-
       enqueue: (sender, value) ->
         if @flags & TERMINATED
           sender.register no, yes
         else
           @_in().enqueue arguments...
 
+Reading from a terminated process is like reading from a *done* channel: the
+final result `value` is immediately conveyed to the `receiver`.
+
       dequeue: (receiver) ->
         if @flags & TERMINATED and not @cout?
           receiver.register @value, yes
         else
           @_out().dequeue arguments...
+
+      detain: (executor, value) -> switch arguments.length
+        when 1 then @_out().detain executor
+        when 2 then @_in().detain executor, value
+        else throw new Error
+
+      cancel: (operation) -> switch operation.type
+        when 'receive' then @_out().cancel operation
+        when 'send'    then @_in().cancel operation
 
 
 #### Process state predicates

@@ -130,7 +130,7 @@ cooperatively avoid causing starvation of other scheduled processes.
 
       it "allows eager-to-lazy communication", async ->
 
-        nibble = go ->
+        nibble = proc ->
           src = chan.from [1..3]
           yield proc ->
             for i in [1..3]
@@ -138,7 +138,7 @@ cooperatively avoid causing starvation of other scheduled processes.
               yield null
               value
 
-        gobble = go ->
+        gobble = proc ->
           src = chan.from [1..9]
           yield proc ->
             for i in [1..9] then yield src
