@@ -403,6 +403,7 @@ to convey that value to another process.
 [`Selector::proceedWith`]: #proceedwith
 [`Process`]: process.coffee.md
 [`Process/run`]: process.coffee.md#run
+[`Process::proceed`]: process.coffee.md#proceed
 [`Operation`]: operation.coffee.md
 [`Operation::proceed`]: operation.coffee.md#proceed
 [`Operation::execute`]: operation.coffee.md#execute
