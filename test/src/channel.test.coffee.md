@@ -39,54 +39,54 @@
 
         it "yields correctly on blocking receive", async ->
           ch = chan()
-          p1 = proc -> assert.equal 42, yield receive ch
+          p1 = proc -> assert.equal yield ch, 42
           p2 = proc -> yield send ch, 42
-          yield receive p1
+          yield p1
 
         it "yields correctly on immediate receive", async ->
           ch = chan()
           p1 = proc -> yield send ch, 42
-          p2 = proc -> assert.equal 42, yield receive ch
-          yield receive p2
+          p2 = proc -> assert.equal yield ch, 42
+          yield p2
 
         it "yields correctly on blocking receive before done", async ->
           ch = chan()
-          p1 = proc -> assert.equal 42, yield receive ch
+          p1 = proc -> assert.equal yield ch, 42
           p2 = proc -> yield ch.close 42
-          yield receive p1
+          yield p1
 
         it "yields correctly on immediate receive after done", async ->
           ch = chan()
           p1 = proc -> yield ch.close 42
-          p2 = proc -> assert.equal 42, yield receive ch
-          yield receive p2
+          p2 = proc -> assert.equal yield ch, 42
+          yield p2
 
 
       describe "sending:", ->
 
         it "yields correctly on blocking send", async ->
           ch = chan()
-          p1 = proc -> assert.equal yes, yield send ch, 42
-          p2 = proc -> yield receive ch
-          yield receive p2
+          p1 = proc -> assert.equal yield (send ch, 42), yes
+          p2 = proc -> yield ch
+          yield p2
 
         it "yields correctly on immediate send", async ->
           ch = chan()
-          p1 = proc -> yield receive ch
-          p2 = proc -> assert.equal yes, yield send ch, 42
-          yield receive p1
+          p1 = proc -> yield ch
+          p2 = proc -> assert.equal yield (send ch, 42), yes
+          yield p1
 
         it "yields correctly on blocking send before close", async ->
           ch = chan()
-          p1 = proc -> assert.equal no, yield send ch, 42
+          p1 = proc -> assert.equal yield (send ch, 42), no
           p2 = proc -> yield ch.close()
-          yield receive p2
+          yield p2
 
         it "yields correctly on immediate send after close", async ->
           ch = chan()
           p1 = proc -> yield ch.close()
-          p2 = proc -> assert.equal no, yield send ch, 42
-          yield receive p1
+          p2 = proc -> assert.equal yield (send ch, 42), no
+          yield p1
 
 
       describe "Async:", ->
@@ -94,19 +94,19 @@
         it "sends to a pulled channel (9 13)", async ->
           ch = chan()
           asyncValue = null
-          p1 = proc -> yield receive ch
+          p1 = proc -> yield ch
           yield sleep 1
           send.async ch, 42, (value) -> asyncValue = value
-          assert.equal 42, yield receive p1
+          assert.equal yield p1, 42
           yield sleep 1
-          assert.equal yes, asyncValue
+          assert.equal asyncValue, yes
 
         it "sends to a detaining channel (4 6 12 14)", async ->
           ch = chan()
           asyncValue = null
           send.async ch, 42, (value) -> asyncValue = value
-          assert.equal 42, yield receive ch
-          assert.equal yes, asyncValue
+          assert.equal yield ch, 42
+          assert.equal asyncValue, yes
 
         it "receives from a pushed channel (6 14)", async ->
           ch = chan()
@@ -114,9 +114,9 @@
           yield sleep 1
           asyncValue = null
           receive.async ch, (value) -> asyncValue = value
-          assert.equal yes, yield receive p1
+          assert.equal yield p1, yes
           yield sleep 1
-          assert.equal 42, asyncValue
+          assert.equal asyncValue, 42
 
 
       describe "polling:", ->
@@ -182,9 +182,9 @@
 
           ch = chan xf
           p1 = proc -> i = 0; continue while yield send ch, ++i
-          p2 = proc -> value until final value = yield receive ch
+          p2 = proc -> value until final value = yield ch
 
-          assert.deepEqual (yield receive p2), [8,6,4,2,1,6,5,1,2,1]
+          assert.deepEqual yield p2, [8,6,4,2,1,6,5,1,2,1]
 
 
       describe "single:", ->
@@ -193,8 +193,8 @@
           ch = chan.single()
           assert not ch.buffer?
           pp = for i in [1..3]
-            proc -> assert.equal 42, yield receive ch
-          yield receive proc -> yield send ch, 42
+            proc -> assert.equal yield ch, 42
+          yield proc -> yield send ch, 42
 
         it "delivers with transduction", async ->
           string = (n) -> n.toString()
@@ -207,17 +207,17 @@
                                  filter gtTwo )
           assert ch.buffer?
           pp = for i in [1..3]
-            proc -> assert.equal 3, yield receive ch
-          yield receive proc -> yield send ch, 1337
+            proc -> assert.equal yield ch, 3
+          yield proc -> yield send ch, 1337
 
         it "keeps its promises", async ->
           ch = chan.promise()
           p1 = proc ->
-            value = yield receive ch
+            value = yield ch
             assert.equal value, 42
             yield send waiter, 'p1'
           p2 = proc ->
-            value = yield receive ch
+            value = yield ch
             assert.equal value, 42
             yield send waiter, 'p2'
           waiter = proc ->
@@ -226,17 +226,24 @@
           sleeper = proc ->
             yield sleep 1
             yield send ch, 42
-          assert.deepEqual (yield receive waiter), ['p1', 'p2']
+          assert.deepEqual yield waiter, ['p1', 'p2']
 
 
       describe "lift:", ->
 
+This test demonstrates a quick-and-dirty way to redefine a Node library in
+terms of channels. Here we apply `lift` to all the async functions in `fs`,
+creating a “lifted” library, which we then put to work inside a process.
+
         fs = {}
-        for name, fn of require 'fs' when not /_|Sync$/.test name
+        rx = /^function (?:[\w_$]+\s*)?\([\w\s, ]*?(?:callback|cb)_?\)/
+        for name, fn of require 'fs' when rx.test fn.toString()
           fs[name] = chan.lift fn
 
+The name of this project will match the name of the directory.
+
         it "looks like sync, runs like async", async ->
-          resolved = yield receive fs.realpath '.'
-          text = yield receive fs.readFile 'package.json', 'utf8'
+          path = yield fs.realpath '.'
+          text = yield fs.readFile 'package.json', 'utf8'
           data = JSON.parse text
-          assert resolved.endsWith data.name
+          assert path.endsWith data.name

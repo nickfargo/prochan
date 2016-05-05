@@ -48,12 +48,12 @@
         var ch, p1, p2;
         ch = chan();
         p1 = proc(function*() {
-          return assert.equal(42, (yield receive(ch)));
+          return assert.equal((yield ch), 42);
         });
         p2 = proc(function*() {
           return (yield send(ch, 42));
         });
-        return (yield receive(p1));
+        return (yield p1);
       }));
       it("yields correctly on immediate receive", async(function*() {
         var ch, p1, p2;
@@ -62,20 +62,20 @@
           return (yield send(ch, 42));
         });
         p2 = proc(function*() {
-          return assert.equal(42, (yield receive(ch)));
+          return assert.equal((yield ch), 42);
         });
-        return (yield receive(p2));
+        return (yield p2);
       }));
       it("yields correctly on blocking receive before done", async(function*() {
         var ch, p1, p2;
         ch = chan();
         p1 = proc(function*() {
-          return assert.equal(42, (yield receive(ch)));
+          return assert.equal((yield ch), 42);
         });
         p2 = proc(function*() {
           return (yield ch.close(42));
         });
-        return (yield receive(p1));
+        return (yield p1);
       }));
       return it("yields correctly on immediate receive after done", async(function*() {
         var ch, p1, p2;
@@ -84,9 +84,9 @@
           return (yield ch.close(42));
         });
         p2 = proc(function*() {
-          return assert.equal(42, (yield receive(ch)));
+          return assert.equal((yield ch), 42);
         });
-        return (yield receive(p2));
+        return (yield p2);
       }));
     });
     describe("sending:", function() {
@@ -94,34 +94,34 @@
         var ch, p1, p2;
         ch = chan();
         p1 = proc(function*() {
-          return assert.equal(true, (yield send(ch, 42)));
+          return assert.equal((yield (send(ch, 42))), true);
         });
         p2 = proc(function*() {
-          return (yield receive(ch));
+          return (yield ch);
         });
-        return (yield receive(p2));
+        return (yield p2);
       }));
       it("yields correctly on immediate send", async(function*() {
         var ch, p1, p2;
         ch = chan();
         p1 = proc(function*() {
-          return (yield receive(ch));
+          return (yield ch);
         });
         p2 = proc(function*() {
-          return assert.equal(true, (yield send(ch, 42)));
+          return assert.equal((yield (send(ch, 42))), true);
         });
-        return (yield receive(p1));
+        return (yield p1);
       }));
       it("yields correctly on blocking send before close", async(function*() {
         var ch, p1, p2;
         ch = chan();
         p1 = proc(function*() {
-          return assert.equal(false, (yield send(ch, 42)));
+          return assert.equal((yield (send(ch, 42))), false);
         });
         p2 = proc(function*() {
           return (yield ch.close());
         });
-        return (yield receive(p2));
+        return (yield p2);
       }));
       return it("yields correctly on immediate send after close", async(function*() {
         var ch, p1, p2;
@@ -130,9 +130,9 @@
           return (yield ch.close());
         });
         p2 = proc(function*() {
-          return assert.equal(false, (yield send(ch, 42)));
+          return assert.equal((yield (send(ch, 42))), false);
         });
-        return (yield receive(p1));
+        return (yield p1);
       }));
     });
     describe("Async:", function() {
@@ -141,15 +141,15 @@
         ch = chan();
         asyncValue = null;
         p1 = proc(function*() {
-          return (yield receive(ch));
+          return (yield ch);
         });
         (yield sleep(1));
         send.async(ch, 42, function(value) {
           return asyncValue = value;
         });
-        assert.equal(42, (yield receive(p1)));
+        assert.equal((yield p1), 42);
         (yield sleep(1));
-        return assert.equal(true, asyncValue);
+        return assert.equal(asyncValue, true);
       }));
       it("sends to a detaining channel (4 6 12 14)", async(function*() {
         var asyncValue, ch;
@@ -158,8 +158,8 @@
         send.async(ch, 42, function(value) {
           return asyncValue = value;
         });
-        assert.equal(42, (yield receive(ch)));
-        return assert.equal(true, asyncValue);
+        assert.equal((yield ch), 42);
+        return assert.equal(asyncValue, true);
       }));
       return it("receives from a pushed channel (6 14)", async(function*() {
         var asyncValue, ch, p1;
@@ -172,9 +172,9 @@
         receive.async(ch, function(value) {
           return asyncValue = value;
         });
-        assert.equal(true, (yield receive(p1)));
+        assert.equal((yield p1), true);
         (yield sleep(1));
-        return assert.equal(42, asyncValue);
+        return assert.equal(asyncValue, 42);
       }));
     });
     describe("polling:", function() {
@@ -261,12 +261,12 @@
         p2 = proc(function*() {
           var results, value;
           results = [];
-          while (!final(value = (yield receive(ch)))) {
+          while (!final(value = (yield ch))) {
             results.push(value);
           }
           return results;
         });
-        return assert.deepEqual((yield receive(p2)), [8, 6, 4, 2, 1, 6, 5, 1, 2, 1]);
+        return assert.deepEqual((yield p2), [8, 6, 4, 2, 1, 6, 5, 1, 2, 1]);
       }));
     });
     describe("single:", function() {
@@ -279,14 +279,14 @@
           results = [];
           for (i = j = 1; j <= 3; i = ++j) {
             results.push(proc(function*() {
-              return assert.equal(42, (yield receive(ch)));
+              return assert.equal((yield ch), 42);
             }));
           }
           return results;
         })();
-        return (yield receive(proc(function*() {
+        return (yield proc(function*() {
           return (yield send(ch, 42));
-        })));
+        }));
       }));
       it("delivers with transduction", async(function*() {
         var ch, char, gtTwo, i, pp, string, toInt;
@@ -309,27 +309,27 @@
           results = [];
           for (i = j = 1; j <= 3; i = ++j) {
             results.push(proc(function*() {
-              return assert.equal(3, (yield receive(ch)));
+              return assert.equal((yield ch), 3);
             }));
           }
           return results;
         })();
-        return (yield receive(proc(function*() {
+        return (yield proc(function*() {
           return (yield send(ch, 1337));
-        })));
+        }));
       }));
       return it("keeps its promises", async(function*() {
         var ch, p1, p2, sleeper, waiter;
         ch = chan.promise();
         p1 = proc(function*() {
           var value;
-          value = (yield receive(ch));
+          value = (yield ch);
           assert.equal(value, 42);
           return (yield send(waiter, 'p1'));
         });
         p2 = proc(function*() {
           var value;
-          value = (yield receive(ch));
+          value = (yield ch);
           assert.equal(value, 42);
           return (yield send(waiter, 'p2'));
         });
@@ -346,25 +346,26 @@
           (yield sleep(1));
           return (yield send(ch, 42));
         });
-        return assert.deepEqual((yield receive(waiter)), ['p1', 'p2']);
+        return assert.deepEqual((yield waiter), ['p1', 'p2']);
       }));
     });
     return describe("lift:", function() {
-      var fn, fs, name, ref2;
+      var fn, fs, name, ref2, rx;
       fs = {};
+      rx = /^function (?:[\w_$]+\s*)?\([\w\s, ]*?(?:callback|cb)_?\)/;
       ref2 = require('fs');
       for (name in ref2) {
         fn = ref2[name];
-        if (!/_|Sync$/.test(name)) {
+        if (rx.test(fn.toString())) {
           fs[name] = chan.lift(fn);
         }
       }
       return it("looks like sync, runs like async", async(function*() {
-        var data, resolved, text;
-        resolved = (yield receive(fs.realpath('.')));
-        text = (yield receive(fs.readFile('package.json', 'utf8')));
+        var data, path, text;
+        path = (yield fs.realpath('.'));
+        text = (yield fs.readFile('package.json', 'utf8'));
         data = JSON.parse(text);
-        return assert(resolved.endsWith(data.name));
+        return assert(path.endsWith(data.name));
       }));
     });
   });
